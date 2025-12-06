@@ -1,6 +1,6 @@
 ### wfdb-rs
 
-Pure Rust implementation of the [Waveform Database (WFDB)](https://physionet.org/content/wfdb) specification.
+Pure Rust implementation of the [Waveform Database (WFDB)](https://physionet.org/content/wfdb) specification. This implementation is based on the [offical specification](https://github.com/wfdb/wfdb.github.io/tree/ec26a8201e5279b2eca4805f944124dda82dedc2/spec).
 
 ### Status
 
