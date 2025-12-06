@@ -1,2 +1,5 @@
 # Rust build artifacts
 /target
+
+# os-related files
+.DS_Store
