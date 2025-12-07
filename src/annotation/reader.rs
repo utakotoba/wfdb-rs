@@ -1,4 +1,4 @@
-use crate::{Error, Result, Time};
+use crate::{Result, Time};
 use std::fs::File;
 use std::io::{BufReader, Seek, SeekFrom};
 use std::path::Path;
@@ -7,6 +7,7 @@ use super::aha::AhaParser;
 use super::format::{AnnotationFormat, AnnotationParser, detect_format};
 use super::mit::MitParser;
 use super::types::Annotation;
+use crate::common::resolve_record_path;
 
 /// A reader for WFDB annotation files.
 ///
@@ -63,11 +64,10 @@ impl AnnotationReader {
     /// # Ok::<(), wfdb::Error>(())
     /// ```
     pub fn open<P: AsRef<Path>>(record_path: P, annotator: &str) -> Result<Self> {
-        let record_path = record_path.as_ref();
-        let (record_dir, record_name) = Self::parse_record_path(record_path)?;
+        let (_, record_dir, record_name) = resolve_record_path(record_path)?;
 
         // Construct annotation file path
-        let annotation_file = record_dir.join(format!("{record_name}.{annotator}"));
+        let annotation_file = record_dir.join(format!("{}.{}", record_name, annotator));
 
         // Open and read the annotation file
         let file = File::open(&annotation_file)?;
@@ -88,32 +88,6 @@ impl AnnotationReader {
             current_index: 0,
             position: 0,
         })
-    }
-
-    /// Parses a record path to extract directory and name.
-    fn parse_record_path(record_path: &Path) -> Result<(&Path, &str)> {
-        if record_path.is_file() {
-            let dir = record_path.parent().ok_or_else(|| {
-                Error::InvalidPath(format!("Invalid record path: {}", record_path.display()))
-            })?;
-            let name = record_path
-                .file_stem()
-                .and_then(|s| s.to_str())
-                .ok_or_else(|| {
-                    Error::InvalidPath(format!("Invalid record path: {}", record_path.display()))
-                })?;
-            Ok((dir, name))
-        } else {
-            // Assume it's a record name in the current directory
-            let dir = record_path.parent().unwrap_or_else(|| Path::new("."));
-            let name = record_path
-                .file_name()
-                .and_then(|s| s.to_str())
-                .ok_or_else(|| {
-                    Error::InvalidPath(format!("Invalid record path: {}", record_path.display()))
-                })?;
-            Ok((dir, name))
-        }
     }
 
     /// Seeks to a specific time position in the annotation stream.

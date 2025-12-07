@@ -14,13 +14,13 @@ pub enum SignalFormat {
     /// 16-bit two's complement integers (little-endian).
     Format16,
 
-    /// 24-bit two’s complement integers (little-endian).
+    /// 24-bit two's complement integers (little-endian).
     Format24,
 
-    /// 32-bit two’s complement integers (little-endian).
+    /// 32-bit two's complement integers (little-endian).
     Format32,
 
-    /// 16-bit two’s complement integers (big-endian).
+    /// 16-bit two's complement integers (big-endian).
     Format61,
 
     /// 8-bit offset binary (unsigned 8-bit, subtract 128 to recover).
@@ -29,10 +29,10 @@ pub enum SignalFormat {
     /// 16-bit offset binary (unsigned 16-bit, subtract 32,768 to recover).
     Format160,
 
-    /// Packed 12-bit two’s complement samples (compact format, common in `PhysioBank`).
+    /// Packed 12-bit two's complement samples (compact format, common in `PhysioBank`).
     Format212,
 
-    /// Packed 10-bit two’s complement samples (legacy format).
+    /// Packed 10-bit two's complement samples (legacy format).
     Format310,
 
     /// Alternative packed 10-bit samples (different packing from 310).
@@ -75,7 +75,7 @@ impl SignalFormat {
     }
 
     /// Converts a `SignalFormat` enum to corresponding format code.
-    #[must_use] 
+    #[must_use]
     pub const fn code(&self) -> u16 {
         match self {
             Self::Format0 => 0,

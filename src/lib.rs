@@ -4,13 +4,17 @@
 //! `PhysioNet` [WFDB](https://physionet.org/content/wfdb) format files.
 
 pub mod annotation;
+mod common;
 mod error;
 pub mod header;
-mod signal_format;
+mod record;
+pub mod signal;
 
 pub use error::Error;
-pub use header::Header;
-pub use signal_format::SignalFormat;
+use header::Header;
+pub use record::{Record, open};
+use signal::SignalFormat;
+use signal::SignalReader;
 
 /// A specialized `Result` type for the WFDB library with its `Error` enum.
 pub type Result<T> = std::result::Result<T, Error>;

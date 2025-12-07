@@ -239,9 +239,17 @@ fn parse_signal_line(line: &str) -> Result<SignalInfo> {
     }
 
     if parts.len() > 6 {
-        checksum = parts[6]
-            .parse()
-            .map_err(|_| Error::InvalidHeader(format!("Invalid checksum: {}", parts[6])))?;
+        // Checksum can be unsigned or signed (e.g. -1 for unknown, or just negative 16-bit value)
+        checksum = if let Ok(val) = parts[6].parse::<u16>() {
+            val
+        } else if let Ok(val) = parts[6].parse::<i16>() {
+            val as u16
+        } else {
+            return Err(Error::InvalidHeader(format!(
+                "Invalid checksum: {}",
+                parts[6]
+            )));
+        };
     }
 
     // Field 7 is optionally block size. Field 8+ is description.

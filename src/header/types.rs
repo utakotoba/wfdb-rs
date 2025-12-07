@@ -4,7 +4,7 @@ pub struct SignalInfo {
     /// File name where signal data is stored.
     pub file_name: String,
     /// Format code for the signal data.
-    pub format: crate::SignalFormat,
+    pub format: crate::signal::SignalFormat,
     /// ADC gain (ADC units per physical unit).
     pub gain: f64,
     /// ADC zero (ADC value corresponding to 0 physical units).
@@ -72,7 +72,7 @@ impl Default for SignalInfo {
     fn default() -> Self {
         Self {
             file_name: String::new(),
-            format: crate::SignalFormat::Format16, // Default to 16-bit
+            format: crate::signal::SignalFormat::Format16, // Default to 16-bit
             gain: 200.0,                           // Default gain
             baseline: 0,
             units: "mV".to_string(),
