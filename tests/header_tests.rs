@@ -1,3 +1,7 @@
+#![allow(clippy::unwrap_used)]
+#![allow(clippy::float_cmp)]
+#![allow(clippy::uninlined_format_args)]
+
 use std::io::Write;
 use tempfile::NamedTempFile;
 use wfdb::SignalFormat;
