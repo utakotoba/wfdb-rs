@@ -22,16 +22,16 @@ impl super::format::AnnotationParser for MitParser {
         loop {
             let mut bytes = [0u8; 2];
             match reader.read_exact(&mut bytes) {
-                Ok(_) => {}
+                Ok(()) => {}
                 Err(e) if e.kind() == std::io::ErrorKind::UnexpectedEof => break,
                 Err(e) => return Err(Error::Io(e)),
             }
 
-            let [byte0, byte1] = bytes;
+            let [b0, b1] = bytes;
 
             // Extract annotation type (bits 2-7 of byte1) and time difference
-            let annotation_type = (byte1 >> 2) & 0x3F;
-            let time_diff = ((byte1 & 0x03) as u16) << 8 | (byte0 as u16);
+            let annotation_type = (b1 >> 2) & 0x3F;
+            let time_diff = u16::from(b1 & 0x03) << 8 | u16::from(b0);
 
             if annotation_type == 0 && time_diff == 0 {
                 break;
@@ -42,16 +42,16 @@ impl super::format::AnnotationParser for MitParser {
                     state.handle_skip(&mut reader)?;
                 }
                 NUM => {
-                    state.handle_num(byte0);
+                    state.handle_num(b0);
                 }
                 SUB => {
-                    state.handle_sub(byte0);
+                    state.handle_sub(b0);
                 }
                 CHN => {
-                    state.handle_chn(byte0);
+                    state.handle_chn(b0);
                 }
                 AUX => {
-                    state.handle_aux(&mut reader, byte0, &mut annotations)?;
+                    ParserState::handle_aux(&mut reader, b0, &mut annotations)?;
                 }
                 _ => {
                     state.handle_annotation(annotation_type, time_diff, &mut annotations)?;
@@ -66,35 +66,34 @@ impl super::format::AnnotationParser for MitParser {
 /// Internal parser state for tracking current annotation context.
 #[derive(Debug, Default)]
 struct ParserState {
-    current_time: crate::Time,
-    current_num: i8,
-    current_chan: u8,
-    current_subtyp: i8,
+    time: crate::Time,
+    num: i8,
+    chan: u8,
+    subtyp: i8,
 }
 
 impl ParserState {
     fn handle_skip<R: Read>(&mut self, reader: &mut R) -> Result<()> {
         let mut skip_bytes = [0u8; 4];
         reader.read_exact(&mut skip_bytes)?;
-        let skip_time = u32::from_le_bytes(skip_bytes) as crate::Time;
-        self.current_time = skip_time;
+        let skip_time = crate::Time::from(u32::from_le_bytes(skip_bytes));
+        self.time = skip_time;
         Ok(())
     }
 
-    fn handle_num(&mut self, byte0: u8) {
-        self.current_num = byte0 as i8;
+    const fn handle_num(&mut self, byte0: u8) {
+        self.num = i8::from_ne_bytes([byte0]);
     }
 
-    fn handle_sub(&mut self, byte0: u8) {
-        self.current_subtyp = byte0 as i8;
+    const fn handle_sub(&mut self, byte0: u8) {
+        self.subtyp = i8::from_ne_bytes([byte0]);
     }
 
-    fn handle_chn(&mut self, byte0: u8) {
-        self.current_chan = byte0;
+    const fn handle_chn(&mut self, byte0: u8) {
+        self.chan = byte0;
     }
 
     fn handle_aux<R: Read>(
-        &self,
         reader: &mut R,
         aux_len: u8,
         annotations: &mut [Annotation],
@@ -129,22 +128,22 @@ impl ParserState {
         annotations: &mut Vec<Annotation>,
     ) -> Result<()> {
         // Update time by adding the time difference
-        self.current_time = self.current_time.wrapping_add(time_diff as crate::Time);
+        self.time = self.time.wrapping_add(crate::Time::from(time_diff));
 
         let code: super::types::AnnotationCode = annotation_type.try_into()?;
 
         let annotation = Annotation {
-            time: self.current_time,
+            time: self.time,
             code,
-            subtyp: self.current_subtyp,
-            chan: self.current_chan,
-            num: self.current_num,
+            subtyp: self.subtyp,
+            chan: self.chan,
+            num: self.num,
             aux: None,
         };
 
         annotations.push(annotation);
 
-        self.current_subtyp = 0;
+        self.subtyp = 0;
 
         Ok(())
     }

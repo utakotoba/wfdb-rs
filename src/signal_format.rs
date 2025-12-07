@@ -29,7 +29,7 @@ pub enum SignalFormat {
     /// 16-bit offset binary (unsigned 16-bit, subtract 32,768 to recover).
     Format160,
 
-    /// Packed 12-bit two’s complement samples (compact format, common in PhysioBank).
+    /// Packed 12-bit two’s complement samples (compact format, common in `PhysioBank`).
     Format212,
 
     /// Packed 10-bit two’s complement samples (legacy format).
@@ -50,7 +50,11 @@ pub enum SignalFormat {
 
 impl SignalFormat {
     /// Converts a format code to a `SignalFormat` enum.
-    pub fn from_code(format_code: u16) -> Result<Self> {
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the format code is not supported.
+    pub const fn from_code(format_code: u16) -> Result<Self> {
         match format_code {
             0 => Ok(Self::Format0),
             8 => Ok(Self::Format8),
@@ -71,7 +75,8 @@ impl SignalFormat {
     }
 
     /// Converts a `SignalFormat` enum to corresponding format code.
-    pub fn code(&self) -> u16 {
+    #[must_use] 
+    pub const fn code(&self) -> u16 {
         match self {
             Self::Format0 => 0,
             Self::Format8 => 8,

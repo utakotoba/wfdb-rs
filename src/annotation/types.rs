@@ -30,7 +30,8 @@ impl Annotation {
     /// Creates a new annotation with the given time and code.
     ///
     /// All other fields are set to their default values (0 for numeric fields, None for aux).
-    pub fn new(time: Time, code: AnnotationCode) -> Self {
+    #[must_use] 
+    pub const fn new(time: Time, code: AnnotationCode) -> Self {
         Self {
             time,
             code,
@@ -42,12 +43,14 @@ impl Annotation {
     }
 
     /// Returns `true` if this annotation has auxiliary information.
-    pub fn has_aux(&self) -> bool {
+    #[must_use] 
+    pub const fn has_aux(&self) -> bool {
         self.aux.is_some()
     }
 
     /// Returns `true` if this annotation is associated with a specific channel.
-    pub fn has_channel(&self) -> bool {
+    #[must_use] 
+    pub const fn has_channel(&self) -> bool {
         self.chan != 0
     }
 }
@@ -148,47 +151,47 @@ impl TryFrom<u8> for AnnotationCode {
 
     fn try_from(code: u8) -> Result<Self> {
         match code {
-            0 => Ok(AnnotationCode::NotQrs),
-            1 => Ok(AnnotationCode::Normal),
-            2 => Ok(AnnotationCode::Lbbb),
-            3 => Ok(AnnotationCode::Rbbb),
-            4 => Ok(AnnotationCode::Aberr),
-            5 => Ok(AnnotationCode::Pvc),
-            6 => Ok(AnnotationCode::Fusion),
-            7 => Ok(AnnotationCode::Npc),
-            8 => Ok(AnnotationCode::Apc),
-            9 => Ok(AnnotationCode::Svpb),
-            10 => Ok(AnnotationCode::Vesc),
-            11 => Ok(AnnotationCode::Nesc),
-            12 => Ok(AnnotationCode::Pace),
-            13 => Ok(AnnotationCode::Unknown),
-            14 => Ok(AnnotationCode::Noise),
-            16 => Ok(AnnotationCode::Arfct),
-            18 => Ok(AnnotationCode::Stch),
-            19 => Ok(AnnotationCode::Tch),
-            20 => Ok(AnnotationCode::Systole),
-            21 => Ok(AnnotationCode::Diastole),
-            22 => Ok(AnnotationCode::Note),
-            23 => Ok(AnnotationCode::Measure),
-            24 => Ok(AnnotationCode::Pwave),
-            25 => Ok(AnnotationCode::Bbb),
-            26 => Ok(AnnotationCode::Pacesp),
-            27 => Ok(AnnotationCode::Twave),
-            28 => Ok(AnnotationCode::Rhythm),
-            29 => Ok(AnnotationCode::Uwave),
-            30 => Ok(AnnotationCode::Learn),
-            31 => Ok(AnnotationCode::Flwav),
-            32 => Ok(AnnotationCode::Vfon),
-            33 => Ok(AnnotationCode::Vfoff),
-            34 => Ok(AnnotationCode::Aesc),
-            35 => Ok(AnnotationCode::Svesc),
-            36 => Ok(AnnotationCode::Link),
-            37 => Ok(AnnotationCode::Napc),
-            38 => Ok(AnnotationCode::Pfus),
-            39 => Ok(AnnotationCode::Wfon),
-            40 => Ok(AnnotationCode::Wfoff),
-            41 => Ok(AnnotationCode::Ront),
-            42..=49 => Ok(AnnotationCode::Other(code)),
+            0 => Ok(Self::NotQrs),
+            1 => Ok(Self::Normal),
+            2 => Ok(Self::Lbbb),
+            3 => Ok(Self::Rbbb),
+            4 => Ok(Self::Aberr),
+            5 => Ok(Self::Pvc),
+            6 => Ok(Self::Fusion),
+            7 => Ok(Self::Npc),
+            8 => Ok(Self::Apc),
+            9 => Ok(Self::Svpb),
+            10 => Ok(Self::Vesc),
+            11 => Ok(Self::Nesc),
+            12 => Ok(Self::Pace),
+            13 => Ok(Self::Unknown),
+            14 => Ok(Self::Noise),
+            16 => Ok(Self::Arfct),
+            18 => Ok(Self::Stch),
+            19 => Ok(Self::Tch),
+            20 => Ok(Self::Systole),
+            21 => Ok(Self::Diastole),
+            22 => Ok(Self::Note),
+            23 => Ok(Self::Measure),
+            24 => Ok(Self::Pwave),
+            25 => Ok(Self::Bbb),
+            26 => Ok(Self::Pacesp),
+            27 => Ok(Self::Twave),
+            28 => Ok(Self::Rhythm),
+            29 => Ok(Self::Uwave),
+            30 => Ok(Self::Learn),
+            31 => Ok(Self::Flwav),
+            32 => Ok(Self::Vfon),
+            33 => Ok(Self::Vfoff),
+            34 => Ok(Self::Aesc),
+            35 => Ok(Self::Svesc),
+            36 => Ok(Self::Link),
+            37 => Ok(Self::Napc),
+            38 => Ok(Self::Pfus),
+            39 => Ok(Self::Wfon),
+            40 => Ok(Self::Wfoff),
+            41 => Ok(Self::Ront),
+            42..=49 => Ok(Self::Other(code)),
             _ => Err(Error::InvalidAnnotationCode(code)),
         }
     }
@@ -246,12 +249,14 @@ impl AnnotationCode {
     /// Returns `true` if this is a valid annotation code for storage.
     ///
     /// `NotQrs` (0) is not a valid annotation code for storage.
-    pub fn is_valid(&self) -> bool {
-        !matches!(self, AnnotationCode::NotQrs)
+    #[must_use] 
+    pub const fn is_valid(&self) -> bool {
+        !matches!(self, Self::NotQrs)
     }
 
     /// Returns `true` if this is a user-defined annotation code.
-    pub fn is_user_defined(&self) -> bool {
-        matches!(self, AnnotationCode::Other(_))
+    #[must_use] 
+    pub const fn is_user_defined(&self) -> bool {
+        matches!(self, Self::Other(_))
     }
 }

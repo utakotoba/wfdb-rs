@@ -74,10 +74,7 @@ pub fn parse_header<P: AsRef<Path>>(path: P) -> Result<Header> {
 fn parse_record_line(line: &str) -> Result<(RecordMetadata, bool)> {
     let parts: Vec<&str> = line.split_whitespace().collect();
     if parts.len() < 2 {
-        return Err(Error::InvalidHeader(format!(
-            "Invalid record line: {}",
-            line
-        )));
+        return Err(Error::InvalidHeader(format!("Invalid record line: {line}")));
     }
 
     // Record name and segments (e.g., "100/2")
@@ -86,7 +83,7 @@ fn parse_record_line(line: &str) -> Result<(RecordMetadata, bool)> {
         (
             n.to_string(),
             Some(s.parse::<usize>().map_err(|_| {
-                Error::InvalidHeader(format!("Invalid segment count in: {}", name_part))
+                Error::InvalidHeader(format!("Invalid segment count in: {name_part}"))
             })?),
         )
     } else {
@@ -129,7 +126,7 @@ fn parse_record_line(line: &str) -> Result<(RecordMetadata, bool)> {
         };
 
         sampling_frequency = samp_val_str.parse().map_err(|_| {
-            Error::InvalidHeader(format!("Invalid sampling frequency: {}", samp_val_str))
+            Error::InvalidHeader(format!("Invalid sampling frequency: {samp_val_str}"))
         })?;
 
         // Parse counter frequency part
@@ -141,15 +138,15 @@ fn parse_record_line(line: &str) -> Result<(RecordMetadata, bool)> {
             };
 
             counter_frequency = Some(c_val_str.parse().map_err(|_| {
-                Error::InvalidHeader(format!("Invalid counter frequency: {}", c_val_str))
+                Error::InvalidHeader(format!("Invalid counter frequency: {c_val_str}"))
             })?);
 
             // If base counter found in counter part
             if let Some(b) = c_base {
-                base_counter =
-                    Some(b.parse().map_err(|_| {
-                        Error::InvalidHeader(format!("Invalid base counter: {}", b))
-                    })?);
+                base_counter = Some(
+                    b.parse()
+                        .map_err(|_| Error::InvalidHeader(format!("Invalid base counter: {b}")))?,
+                );
             }
         }
     } else {
@@ -190,10 +187,7 @@ fn parse_record_line(line: &str) -> Result<(RecordMetadata, bool)> {
 fn parse_signal_line(line: &str) -> Result<SignalInfo> {
     let parts: Vec<&str> = line.split_whitespace().collect();
     if parts.len() < 2 {
-        return Err(Error::InvalidHeader(format!(
-            "Invalid signal line: {}",
-            line
-        )));
+        return Err(Error::InvalidHeader(format!("Invalid signal line: {line}")));
     }
 
     let file_name = parts[0].to_string();
@@ -202,60 +196,29 @@ fn parse_signal_line(line: &str) -> Result<SignalInfo> {
     let (format, block_size) = if let Some((f, b)) = format_str.split_once('x') {
         let format_code = f
             .parse::<u16>()
-            .map_err(|_| Error::InvalidHeader(format!("Invalid format code: {}", f)))?;
+            .map_err(|_| Error::InvalidHeader(format!("Invalid format code: {f}")))?;
         let b_size = b
             .parse::<usize>()
-            .map_err(|_| Error::InvalidHeader(format!("Invalid block size: {}", b)))?;
+            .map_err(|_| Error::InvalidHeader(format!("Invalid block size: {b}")))?;
         (SignalFormat::from_code(format_code)?, b_size)
     } else {
         let format_code = format_str
             .parse::<u16>()
-            .map_err(|_| Error::InvalidHeader(format!("Invalid format code: {}", format_str)))?;
+            .map_err(|_| Error::InvalidHeader(format!("Invalid format code: {format_str}")))?;
         (SignalFormat::from_code(format_code)?, 0)
     };
 
-    let mut gain = 200.0;
-    let mut baseline = 0;
-    let mut units = "mV".to_string();
+    let (gain, baseline, units) = if parts.len() > 2 {
+        parse_gain_baseline_units(parts[2])?
+    } else {
+        (200.0, 0, "mV".to_string())
+    };
+
     let mut adc_res = 12; // Default?
     let mut adc_zero = 0;
     let mut init_value = 0;
     let mut checksum = 0;
     let mut description = None;
-
-    if parts.len() > 2 {
-        let gain_part = parts[2];
-        if let Some((g, rest)) = gain_part.split_once('(') {
-            gain = g
-                .parse()
-                .map_err(|_| Error::InvalidHeader(format!("Invalid gain: {}", g)))?;
-
-            if let Some((b, u_part)) = rest.split_once(')') {
-                baseline = b
-                    .parse()
-                    .map_err(|_| Error::InvalidHeader(format!("Invalid baseline: {}", b)))?;
-
-                if let Some(u) = u_part.strip_prefix('/') {
-                    units = u.to_string();
-                }
-            } else {
-                return Err(Error::InvalidHeader(format!(
-                    "Invalid gain/baseline format: {}",
-                    gain_part
-                )));
-            }
-        } else if let Some((g, u)) = gain_part.split_once('/') {
-            // Handle "gain/units" format
-            gain = g
-                .parse()
-                .map_err(|_| Error::InvalidHeader(format!("Invalid gain: {}", g)))?;
-            units = u.to_string();
-        } else {
-            gain = gain_part
-                .parse()
-                .map_err(|_| Error::InvalidHeader(format!("Invalid gain: {}", gain_part)))?;
-        }
-    }
 
     if parts.len() > 3 {
         adc_res = parts[3]
@@ -288,8 +251,8 @@ fn parse_signal_line(line: &str) -> Result<SignalInfo> {
     let mut desc_start_index = 8;
 
     if parts.len() > 7 {
-        let part7 = parts[7];
-        if let Ok(bs) = part7.parse::<usize>() {
+        let maybe_block_size = parts[7];
+        if let Ok(bs) = maybe_block_size.parse::<usize>() {
             // It's a valid integer, likely block size
             if block_size == 0 {
                 final_block_size = bs;
@@ -319,12 +282,47 @@ fn parse_signal_line(line: &str) -> Result<SignalInfo> {
     })
 }
 
+fn parse_gain_baseline_units(gain_part: &str) -> Result<(f64, i32, String)> {
+    if let Some((g, rest)) = gain_part.split_once('(') {
+        let gain = g
+            .parse()
+            .map_err(|_| Error::InvalidHeader(format!("Invalid gain: {g}")))?;
+
+        if let Some((b, u_part)) = rest.split_once(')') {
+            let baseline = b
+                .parse()
+                .map_err(|_| Error::InvalidHeader(format!("Invalid baseline: {b}")))?;
+
+            let units = u_part
+                .strip_prefix('/')
+                .map_or_else(|| "mV".to_string(), ToString::to_string);
+
+            Ok((gain, baseline, units))
+        } else {
+            Err(Error::InvalidHeader(format!(
+                "Invalid gain/baseline format: {gain_part}"
+            )))
+        }
+    } else if let Some((g, u)) = gain_part.split_once('/') {
+        // Handle "gain/units" format
+        let gain = g
+            .parse()
+            .map_err(|_| Error::InvalidHeader(format!("Invalid gain: {g}")))?;
+        let units = u.to_string();
+        Ok((gain, 0, units))
+    } else {
+        let gain = gain_part
+            .parse()
+            .map_err(|_| Error::InvalidHeader(format!("Invalid gain: {gain_part}")))?;
+        Ok((gain, 0, "mV".to_string()))
+    }
+}
+
 fn parse_segment_line(line: &str) -> Result<SegmentInfo> {
     let parts: Vec<&str> = line.split_whitespace().collect();
     if parts.len() < 2 {
         return Err(Error::InvalidHeader(format!(
-            "Invalid segment line: {}",
-            line
+            "Invalid segment line: {line}"
         )));
     }
 

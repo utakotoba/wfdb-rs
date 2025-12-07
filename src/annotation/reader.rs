@@ -49,6 +49,10 @@ impl AnnotationReader {
     /// A new `AnnotationReader` instance, or an error if the file cannot be opened
     /// or parsed.
     ///
+    /// # Errors
+    ///
+    /// Returns an error if the file cannot be opened, read, or if the format is invalid.
+    ///
     /// # Example
     ///
     /// ```no_run
@@ -63,7 +67,7 @@ impl AnnotationReader {
         let (record_dir, record_name) = Self::parse_record_path(record_path)?;
 
         // Construct annotation file path
-        let annotation_file = record_dir.join(format!("{}.{}", record_name, annotator));
+        let annotation_file = record_dir.join(format!("{record_name}.{annotator}"));
 
         // Open and read the annotation file
         let file = File::open(&annotation_file)?;
@@ -90,13 +94,13 @@ impl AnnotationReader {
     fn parse_record_path(record_path: &Path) -> Result<(&Path, &str)> {
         if record_path.is_file() {
             let dir = record_path.parent().ok_or_else(|| {
-                Error::InvalidPath(format!("Invalid record path: {:?}", record_path))
+                Error::InvalidPath(format!("Invalid record path: {}", record_path.display()))
             })?;
             let name = record_path
                 .file_stem()
                 .and_then(|s| s.to_str())
                 .ok_or_else(|| {
-                    Error::InvalidPath(format!("Invalid record path: {:?}", record_path))
+                    Error::InvalidPath(format!("Invalid record path: {}", record_path.display()))
                 })?;
             Ok((dir, name))
         } else {
@@ -106,7 +110,7 @@ impl AnnotationReader {
                 .file_name()
                 .and_then(|s| s.to_str())
                 .ok_or_else(|| {
-                    Error::InvalidPath(format!("Invalid record path: {:?}", record_path))
+                    Error::InvalidPath(format!("Invalid record path: {}", record_path.display()))
                 })?;
             Ok((dir, name))
         }
@@ -137,23 +141,27 @@ impl AnnotationReader {
     ///
     /// This is the time of the last annotation returned, or the seek position
     /// if no annotations have been read yet.
-    pub fn position(&self) -> Time {
+    #[must_use] 
+    pub const fn position(&self) -> Time {
         self.position
     }
 
     /// Returns the total number of annotations.
-    pub fn len(&self) -> usize {
+    #[must_use] 
+    pub const fn len(&self) -> usize {
         self.annotations.len()
     }
 
     /// Returns `true` if there are no annotations.
-    pub fn is_empty(&self) -> bool {
+    #[must_use] 
+    pub const fn is_empty(&self) -> bool {
         self.annotations.is_empty()
     }
 
     /// Returns a reference to all annotations.
     ///
     /// This provides access to all annotations without consuming the reader.
+    #[must_use] 
     pub fn annotations(&self) -> &[Annotation] {
         &self.annotations
     }
@@ -177,19 +185,18 @@ impl AnnotationReader {
 
     /// Reads the next annotation.
     ///
-    /// Returns `Ok(Some(annotation))` if an annotation is available,
-    /// `Ok(None)` if the end of the file has been reached, or an error
-    /// if reading fails.
-    fn read_next(&mut self) -> Result<Option<Annotation>> {
+    /// Returns `Some(annotation)` if an annotation is available,
+    /// `None` if the end of the file has been reached.
+    fn read_next(&mut self) -> Option<Annotation> {
         if self.current_index >= self.annotations.len() {
-            return Ok(None);
+            return None;
         }
 
         let annotation = self.annotations[self.current_index].clone();
         self.current_index += 1;
         self.position = annotation.time;
 
-        Ok(Some(annotation))
+        Some(annotation)
     }
 }
 
@@ -197,6 +204,6 @@ impl Iterator for AnnotationReader {
     type Item = Result<Annotation>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.read_next().transpose()
+        self.read_next().map(Ok)
     }
 }

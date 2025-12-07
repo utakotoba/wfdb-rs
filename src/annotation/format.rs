@@ -17,10 +17,11 @@ pub enum AnnotationFormat {
 
 impl AnnotationFormat {
     /// Returns a human-readable description of the format.
-    pub fn description(&self) -> &'static str {
+    #[must_use]
+    pub const fn description(&self) -> &'static str {
         match self {
-            AnnotationFormat::Mit => "MIT (standard WFDB) format",
-            AnnotationFormat::Aha => "AHA (American Heart Association) format",
+            Self::Mit => "MIT (standard WFDB) format",
+            Self::Aha => "AHA (American Heart Association) format",
         }
     }
 }
@@ -36,6 +37,10 @@ pub trait AnnotationParser {
     /// # Returns
     ///
     /// A vector of parsed annotations, or an error if parsing fails.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if reading from the input fails or if the format is invalid.
     fn parse<R: Read>(reader: R) -> Result<Vec<super::Annotation>>;
 }
 
@@ -60,23 +65,23 @@ pub fn detect_format<R: Read + Seek>(reader: &mut R) -> Result<AnnotationFormat>
     let mut bytes = [0u8; 2];
 
     match reader.read_exact(&mut bytes) {
-        Ok(_) => {
+        Ok(()) => {
             reader.seek(SeekFrom::Start(pos))?;
 
-            let [byte0, byte1] = bytes;
+            let [b0, b1] = bytes;
 
             // MIT format detection:
             // - The annotation type is in bits 2-7 of byte1
             // - The time difference is in bits 0-1 of byte1 and all of byte0
             // - Valid MIT format: annotation_type <= 63 and time_diff bits < 4
-            let annotation_type = (byte1 >> 2) & 0x3F;
-            let time_diff_bits = byte1 & 0x03;
+            let annotation_type = (b1 >> 2) & 0x3F;
+            let time_diff_bits = b1 & 0x03;
 
             // AHA format detection:
             // - AHA files begin with a null byte (byte0 == 0)
             // - Followed by an ASCII character that is a legal AHA annotation code
-            if byte0 == 0 && byte1 != 0 && byte1 != b'[' && byte1 != b']' {
-                if (32..=126).contains(&byte1) {
+            if b0 == 0 && b1 != 0 && b1 != b'[' && b1 != b']' {
+                if (32..=126).contains(&b1) {
                     Ok(AnnotationFormat::Aha)
                 } else {
                     Ok(AnnotationFormat::Mit)

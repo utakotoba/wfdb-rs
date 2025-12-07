@@ -21,7 +21,7 @@ fn test_parse_simple_header() {
     assert_eq!(header.metadata.name, "100");
     assert_eq!(header.metadata.num_signals, 2);
     assert_eq!(header.metadata.sampling_frequency, 360.0);
-    assert_eq!(header.metadata.num_samples, Some(650000));
+    assert_eq!(header.metadata.num_samples, Some(650_000));
     assert_eq!(header.metadata.base_time, Some("12:00:00".to_string()));
     assert_eq!(header.metadata.base_date, Some("01/01/2000".to_string()));
 

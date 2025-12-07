@@ -47,7 +47,7 @@ pub struct RecordMetadata {
 }
 
 /// Information about a segment in a multi-segment record.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SegmentInfo {
     /// Name of the segment record.
     pub name: String,
