@@ -30,7 +30,7 @@ impl Annotation {
     /// Creates a new annotation with the given time and code.
     ///
     /// All other fields are set to their default values (0 for numeric fields, None for aux).
-    #[must_use] 
+    #[must_use]
     pub const fn new(time: Time, code: AnnotationCode) -> Self {
         Self {
             time,
@@ -43,13 +43,13 @@ impl Annotation {
     }
 
     /// Returns `true` if this annotation has auxiliary information.
-    #[must_use] 
+    #[must_use]
     pub const fn has_aux(&self) -> bool {
         self.aux.is_some()
     }
 
     /// Returns `true` if this annotation is associated with a specific channel.
-    #[must_use] 
+    #[must_use]
     pub const fn has_channel(&self) -> bool {
         self.chan != 0
     }
@@ -249,13 +249,13 @@ impl AnnotationCode {
     /// Returns `true` if this is a valid annotation code for storage.
     ///
     /// `NotQrs` (0) is not a valid annotation code for storage.
-    #[must_use] 
+    #[must_use]
     pub const fn is_valid(&self) -> bool {
         !matches!(self, Self::NotQrs)
     }
 
     /// Returns `true` if this is a user-defined annotation code.
-    #[must_use] 
+    #[must_use]
     pub const fn is_user_defined(&self) -> bool {
         matches!(self, Self::Other(_))
     }
