@@ -4,8 +4,8 @@
 
 use std::io::Write;
 use tempfile::NamedTempFile;
-use wfdb::SignalFormat;
 use wfdb::header::parse_header;
+use wfdb::signal::SignalFormat;
 
 #[test]
 fn test_parse_simple_header() {
