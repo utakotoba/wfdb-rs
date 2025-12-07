@@ -4,7 +4,5 @@
 
 mod formats;
 mod reader;
-mod types;
 
 pub use reader::SignalReader;
-pub use types::SignalFormat;
