@@ -4,7 +4,6 @@
 //! `PhysioNet` [WFDB](https://physionet.org/content/wfdb) format files.
 
 pub mod annotation;
-mod common;
 mod error;
 pub mod header;
 mod record;

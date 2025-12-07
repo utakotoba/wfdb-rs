@@ -7,7 +7,7 @@ use super::aha::AhaParser;
 use super::format::{AnnotationFormat, AnnotationParser, detect_format};
 use super::mit::MitParser;
 use super::types::Annotation;
-use crate::common::resolve_record_path;
+use crate::record::resolve_record_path;
 
 /// A reader for WFDB annotation files.
 ///
@@ -115,19 +115,19 @@ impl AnnotationReader {
     ///
     /// This is the time of the last annotation returned, or the seek position
     /// if no annotations have been read yet.
-    #[must_use] 
+    #[must_use]
     pub const fn position(&self) -> Time {
         self.position
     }
 
     /// Returns the total number of annotations.
-    #[must_use] 
+    #[must_use]
     pub const fn len(&self) -> usize {
         self.annotations.len()
     }
 
     /// Returns `true` if there are no annotations.
-    #[must_use] 
+    #[must_use]
     pub const fn is_empty(&self) -> bool {
         self.annotations.is_empty()
     }
@@ -135,7 +135,7 @@ impl AnnotationReader {
     /// Returns a reference to all annotations.
     ///
     /// This provides access to all annotations without consuming the reader.
-    #[must_use] 
+    #[must_use]
     pub fn annotations(&self) -> &[Annotation] {
         &self.annotations
     }

@@ -1,7 +1,6 @@
-use crate::common::resolve_record_path;
 use crate::header::parse_header;
 use crate::{Error, Header, Result, SignalReader};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 /// A WFDB record, containing header information and a reader for signal data.
 pub struct Record {
@@ -33,7 +32,6 @@ impl Iterator for RecordIterator {
                 Some(Ok(entry)) => {
                     let path = entry.path();
                     if path.extension().map_or(false, |ext| ext == "hea") {
-                        // Found a header file, try to open the record
                         return Some(Record::open(&path));
                     }
                 }
@@ -74,12 +72,65 @@ pub fn open<P: AsRef<Path>>(path: P) -> Result<Box<dyn Iterator<Item = Result<Re
         let entries = std::fs::read_dir(path)?;
         Ok(Box::new(RecordIterator { entries }))
     } else {
-        // Assume it's a record path (file or base name)
-        // If it fails to open, we return the error in the iterator (or immediately?)
-        // Ideally immediately if the path itself is invalid, but `Record::open` checks existence.
-        // But `open` interface says "returns iterator".
-        // Let's try to open it.
         let record = Record::open(path)?;
         Ok(Box::new(std::iter::once(Ok(record))))
+    }
+}
+
+/// Resolves a record path to its components.
+///
+/// Returns `(header_path, base_dir, record_name)`.
+///
+/// # Arguments
+///
+/// * `path` - Path to the record (header file or record name).
+pub(crate) fn resolve_record_path<P: AsRef<Path>>(path: P) -> Result<(PathBuf, PathBuf, String)> {
+    let path = path.as_ref();
+
+    if path.is_file() || path.extension().map_or(false, |ext| ext == "hea") {
+        if path.extension().map_or(false, |ext| ext == "hea") {
+            let dir = path
+                .parent()
+                .unwrap_or_else(|| Path::new("."))
+                .to_path_buf();
+            let name = path
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .ok_or_else(|| Error::InvalidPath(format!("Invalid record path: {:?}", path)))?
+                .to_string();
+            Ok((path.to_path_buf(), dir, name))
+        } else {
+            let dir = path
+                .parent()
+                .unwrap_or_else(|| Path::new("."))
+                .to_path_buf();
+            let name = path
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .ok_or_else(|| Error::InvalidPath(format!("Invalid record path: {:?}", path)))?
+                .to_string();
+
+            // Header path is dir/name.hea
+            let header_path = dir.join(format!("{}.hea", name));
+            Ok((header_path, dir, name))
+        }
+    } else {
+        let dir = path
+            .parent()
+            .unwrap_or_else(|| Path::new("."))
+            .to_path_buf();
+        let name = path
+            .file_name()
+            .and_then(|s| s.to_str())
+            .ok_or_else(|| Error::InvalidPath(format!("Invalid record path: {:?}", path)))?
+            .to_string();
+
+        let header_path = if path.extension().map_or(false, |ext| ext == "hea") {
+            path.to_path_buf()
+        } else {
+            path.with_extension("hea")
+        };
+
+        Ok((header_path, dir, name))
     }
 }
