@@ -5,9 +5,11 @@
 
 pub mod annotation;
 mod error;
+pub mod header;
 mod signal_format;
 
 pub use error::Error;
+pub use header::Header;
 pub use signal_format::SignalFormat;
 
 /// A specialized `Result` type for the WFDB library with its `Error` enum.

@@ -34,4 +34,8 @@ pub enum Error {
     /// Wraps I/O errors that occur during file operations.
     #[error("I/O error: {0}")]
     Io(#[from] std::io::Error),
+
+    /// Indicates an invalid header format.
+    #[error("Invalid header: {0}")]
+    InvalidHeader(String),
 }
