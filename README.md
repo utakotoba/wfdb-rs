@@ -4,7 +4,9 @@ Pure Rust implementation of the [Waveform Database (WFDB)](https://physionet.org
 
 ### Status
 
-> Work in progress
+The basic decoding of Waveform Database (WFDB) format files is implemented.
+
+> Working on supporting more formats and bringing the library to WebAssembly.
 
 ### License
 
