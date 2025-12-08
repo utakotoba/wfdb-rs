@@ -1,0 +1,2 @@
+# allow list for tests
+allow-unwrap-in-tests = true

@@ -1,6 +1,6 @@
 //! High-level API to interact with Waveform Database files
 
-use crate::header::parse_header;
+use crate::header::parse_header_from_path;
 use crate::shared::Header;
 use crate::signal::SignalReader;
 use crate::{Error, Result};
@@ -20,7 +20,7 @@ impl Record {
     /// Will return an error if the file cannot be opened, read, or if the format is unsupported.
     pub fn open<P: AsRef<Path>>(path: P) -> Result<Self> {
         let (header_path, base_dir, _) = resolve_record_path(path)?;
-        let header = parse_header(&header_path)?;
+        let header = parse_header_from_path(&header_path)?;
         let reader = SignalReader::new(header.clone(), &base_dir)?;
         Ok(Self { header, reader })
     }

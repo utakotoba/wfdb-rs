@@ -6,14 +6,23 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 
-/// Parses a WFDB header file.
+/// Parses a WFDB header file from give path.
 ///
 /// # Errors
 ///
-/// Will return an error if the file cannot be opened, read, or if the format is invalid.
-pub fn parse_header<P: AsRef<Path>>(path: P) -> Result<Header> {
+/// Will return an error if the file is not found, unable to be read, or invalid.
+pub fn parse_header_from_path<P: AsRef<Path>>(path: P) -> Result<Header> {
     let file = File::open(path.as_ref())?;
     let reader = BufReader::new(file);
+    parse_header(reader)
+}
+
+/// Parses a WFDB header content from buffer.
+///
+/// # Errors
+///
+/// Will return an error if the format of header is invalid.
+pub fn parse_header<R: BufRead>(reader: R) -> Result<Header> {
     let mut lines = reader.lines();
 
     // Parse the first line (record line)

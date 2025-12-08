@@ -2,6 +2,8 @@
 //!
 //! This module handles reading and parsing of WFDB header files (.hea).
 
+mod metadata;
 mod parser;
 
-pub use parser::parse_header;
+pub use metadata::Metadata;
+pub use parser::*;
