@@ -66,7 +66,7 @@ impl TryFrom<u16> for SignalFormat {
 
 impl From<SignalFormat> for u16 {
     /// Converts a `SignalFormat` enum to corresponding format code.
-    fn from(format: SignalFormat) -> u16 {
+    fn from(format: SignalFormat) -> Self {
         match format {
             SignalFormat::Format0 => 0,
             SignalFormat::Format8 => 8,
