@@ -6,9 +6,6 @@ Pure Rust implementation of the [Waveform Database (WFDB)](https://physionet.org
 
 The basic decoding of Waveform Database (WFDB) format files is implemented.
 
-> [!NOTE]
-> Working on supporting more formats and bringing the library to WebAssembly.
-
 > [!WARNING]
 > Versioning strategy:
 > - v0.1.x: breaking changes may occur in patch releases.
@@ -16,6 +13,14 @@ The basic decoding of Waveform Database (WFDB) format files is implemented.
 
 > [!CAUTION]
 > This library is not stable; it may not handle all kinds of waveform database files. I'm working on testing the library on more datasets in WFDB format, but it still takes some time to finish. If you find some problem processing your datasets, feel free to open an issue or PR.
+
+- [x] Header format parser
+- [x] Essential signal formats decoding support: Format 0, Foramt 16 and Format 212
+- [ ] FLAC-compressed signal formats support (Format 508, Format 516 and Format 524)
+- [ ] Annotations and signals matching
+- [ ] WebAssembly compatibility
+- [ ] Basic signal processing tools
+- [ ] Physiological processing
 
 ### License
 
