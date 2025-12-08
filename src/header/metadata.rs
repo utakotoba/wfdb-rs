@@ -71,9 +71,10 @@ pub struct Metadata {
 }
 
 impl Metadata {
-    const DEFAULT_SAMPLING_FREQUENCY: f64 = 250.0;
+    /// Default sampling frequency (Hz) when omitted from the record line.
+    pub const DEFAULT_SAMPLING_FREQUENCY: f64 = 250.0;
 
-    /// Build a metadata from the record line (first line) of WFDB header.
+    /// Build a metadata from the record line (first line) of __WFDB__ header.
     ///
     /// # Errors
     ///
