@@ -217,12 +217,12 @@ fn parse_signal_line(line: &str) -> Result<SignalInfo> {
         let b_size = b
             .parse::<usize>()
             .map_err(|_| Error::InvalidHeader(format!("Invalid block size: {b}")))?;
-        (SignalFormat::from_code(format_code)?, b_size)
+        (SignalFormat::try_from(format_code)?, b_size)
     } else {
         let format_code = format_str
             .parse::<u16>()
             .map_err(|_| Error::InvalidHeader(format!("Invalid format code: {format_str}")))?;
-        (SignalFormat::from_code(format_code)?, 0)
+        (SignalFormat::try_from(format_code)?, 0)
     };
 
     let (gain, baseline, units) = if parts.len() > 2 {

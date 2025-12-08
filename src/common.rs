@@ -35,13 +35,15 @@ pub enum SignalFormat {
     Flac24,
 }
 
-impl SignalFormat {
+impl TryFrom<u16> for SignalFormat {
+    type Error = Error;
+
     /// Converts a format code to a `SignalFormat` enum.
     ///
     /// # Errors
     ///
     /// Returns an error if the format code is not supported.
-    pub const fn from_code(format_code: u16) -> Result<Self> {
+    fn try_from(format_code: u16) -> Result<Self> {
         match format_code {
             0 => Ok(Self::Format0),
             8 => Ok(Self::Format8),
@@ -60,25 +62,26 @@ impl SignalFormat {
             _ => Err(Error::UnsupportedSignalFormat(format_code)),
         }
     }
+}
 
+impl From<SignalFormat> for u16 {
     /// Converts a `SignalFormat` enum to corresponding format code.
-    #[must_use]
-    pub const fn code(self) -> u16 {
-        match self {
-            Self::Format0 => 0,
-            Self::Format8 => 8,
-            Self::Format16 => 16,
-            Self::Format24 => 24,
-            Self::Format32 => 32,
-            Self::Format61 => 61,
-            Self::Format80 => 80,
-            Self::Format160 => 160,
-            Self::Format212 => 212,
-            Self::Format310 => 310,
-            Self::Format311 => 311,
-            Self::Flac8 => 508,
-            Self::Flac16 => 516,
-            Self::Flac24 => 524,
+    fn from(format: SignalFormat) -> u16 {
+        match format {
+            SignalFormat::Format0 => 0,
+            SignalFormat::Format8 => 8,
+            SignalFormat::Format16 => 16,
+            SignalFormat::Format24 => 24,
+            SignalFormat::Format32 => 32,
+            SignalFormat::Format61 => 61,
+            SignalFormat::Format80 => 80,
+            SignalFormat::Format160 => 160,
+            SignalFormat::Format212 => 212,
+            SignalFormat::Format310 => 310,
+            SignalFormat::Format311 => 311,
+            SignalFormat::Flac8 => 508,
+            SignalFormat::Flac16 => 516,
+            SignalFormat::Flac24 => 524,
         }
     }
 }
