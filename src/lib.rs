@@ -8,8 +8,11 @@ pub mod header;
 pub mod signal;
 
 // Internal module declaration
+mod common;
 mod record;
 mod shared;
 
-pub use crate::record::{Record, open};
+pub use common::*;
+pub use header::Metadata;
+pub use record::{Record, open};
 pub use shared::*;

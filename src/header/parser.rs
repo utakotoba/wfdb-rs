@@ -1,6 +1,7 @@
 use chrono::{NaiveDate, NaiveTime};
 
-use crate::shared::{Header, RecordMetadata, SegmentInfo, SignalFormat, SignalInfo};
+use crate::SignalFormat;
+use crate::shared::{Header, RecordMetadata, SegmentInfo, SignalInfo};
 use crate::{Error, Result};
 use std::fs::File;
 use std::io::{BufRead, BufReader};

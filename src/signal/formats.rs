@@ -1,4 +1,4 @@
-use crate::shared::SignalFormat;
+use crate::SignalFormat;
 use crate::{Error, Result, Sample};
 
 /// A trait for decoding signal data.

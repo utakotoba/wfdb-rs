@@ -1,4 +1,5 @@
-use crate::shared::{Header, SignalFormat};
+use crate::SignalFormat;
+use crate::shared::Header;
 use crate::signal::formats::{FormatDecoder, get_decoder};
 use crate::{Error, Result, Sample};
 use std::fs::File;

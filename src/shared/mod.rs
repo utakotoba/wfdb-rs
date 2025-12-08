@@ -6,7 +6,7 @@ mod signal;
 
 pub use error::Error;
 pub use header::{Header, RecordMetadata, SegmentInfo};
-pub use signal::{SignalFormat, SignalInfo};
+pub use signal::SignalInfo;
 
 /// A specialized `Result` type for the WFDB library with its `Error` enum.
 pub type Result<T> = std::result::Result<T, Error>;
