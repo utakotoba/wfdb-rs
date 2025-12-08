@@ -1,6 +1,9 @@
+//! High-level API to interact with Waveform Database files
+
 use crate::header::parse_header;
 use crate::shared::Header;
-use crate::{Error, Result, SignalReader};
+use crate::signal::SignalReader;
+use crate::{Error, Result};
 use std::path::{Path, PathBuf};
 
 /// A WFDB record, containing header information and a reader for signal data.
