@@ -1,5 +1,6 @@
+use crate::shared::{Header, SignalFormat};
 use crate::signal::formats::{FormatDecoder, get_decoder};
-use crate::{Error, Header, Result, Sample, SignalFormat};
+use crate::{Error, Result, Sample};
 use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::Path;

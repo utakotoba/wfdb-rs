@@ -1,4 +1,5 @@
-use crate::{Error, Result, Sample, SignalFormat};
+use crate::shared::SignalFormat;
+use crate::{Error, Result, Sample};
 
 /// A trait for decoding signal data.
 pub trait FormatDecoder: Send + Sync {

@@ -1,5 +1,7 @@
-use super::types::{Header, RecordMetadata, SegmentInfo, SignalInfo};
-use crate::{Error, Result, SignalFormat};
+use chrono::{NaiveDate, NaiveTime};
+
+use crate::shared::{Header, RecordMetadata, SegmentInfo, SignalFormat, SignalInfo};
+use crate::{Error, Result};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
@@ -164,11 +166,11 @@ fn parse_record_line(line: &str) -> Result<(RecordMetadata, bool)> {
     }
 
     if parts.len() > 4 {
-        base_time = Some(parts[4].to_string());
+        base_time = NaiveTime::parse_from_str(parts[4], "%H:%M:%S").ok();
     }
 
     if parts.len() > 5 {
-        base_date = Some(parts[5].to_string());
+        base_date = NaiveDate::parse_from_str(parts[5], "%d/%m/%Y").ok();
     }
 
     let is_multi_segment = num_segments.is_some();
@@ -176,6 +178,7 @@ fn parse_record_line(line: &str) -> Result<(RecordMetadata, bool)> {
     Ok((
         RecordMetadata {
             name,
+            num_segments: None, // TODO: support multi-segment header
             num_signals,
             sampling_frequency,
             counter_frequency,
@@ -274,14 +277,14 @@ fn parse_signal_line(line: &str) -> Result<SignalInfo> {
     Ok(SignalInfo {
         file_name,
         format,
-        gain,
-        baseline,
-        units,
-        adc_res,
-        adc_zero,
-        init_value,
-        checksum,
-        block_size: final_block_size,
+        gain: Some(gain),
+        baseline: Some(baseline),
+        units: Some(units),
+        adc_res: Some(adc_res),
+        adc_zero: Some(adc_zero),
+        initial_value: Some(init_value),
+        checksum: Some(checksum),
+        block_size: Some(final_block_size),
         description,
     })
 }

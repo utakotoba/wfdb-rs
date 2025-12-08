@@ -1,5 +1,6 @@
 use crate::header::parse_header;
-use crate::{Error, Header, Result, SignalReader};
+use crate::shared::Header;
+use crate::{Error, Result, SignalReader};
 use std::path::{Path, PathBuf};
 
 /// A WFDB record, containing header information and a reader for signal data.

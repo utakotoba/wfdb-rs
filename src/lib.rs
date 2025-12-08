@@ -7,14 +7,13 @@ pub mod annotation;
 mod error;
 pub mod header;
 mod record;
+pub mod shared;
 pub mod signal;
 mod types;
 
 pub use error::Error;
-use header::Header;
 pub use record::{Record, open};
 use signal::SignalReader;
-use types::SignalFormat;
 
 /// A specialized `Result` type for the WFDB library with its `Error` enum.
 pub type Result<T> = std::result::Result<T, Error>;
