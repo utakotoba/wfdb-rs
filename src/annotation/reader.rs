@@ -67,7 +67,7 @@ impl AnnotationReader {
         let (_, record_dir, record_name) = resolve_record_path(record_path)?;
 
         // Construct annotation file path
-        let annotation_file = record_dir.join(format!("{}.{}", record_name, annotator));
+        let annotation_file = record_dir.join(format!("{record_name}.{annotator}"));
 
         // Open and read the annotation file
         let file = File::open(&annotation_file)?;

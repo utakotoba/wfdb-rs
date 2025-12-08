@@ -10,6 +10,10 @@ pub struct Record {
 
 impl Record {
     /// Opens a single WFDB record from a path.
+    ///
+    /// # Errors
+    ///
+    /// Will return an error if the file cannot be opened, read, or if the format is unsupported.
     pub fn open<P: AsRef<Path>>(path: P) -> Result<Self> {
         let (header_path, base_dir, _) = resolve_record_path(path)?;
         let header = parse_header(&header_path)?;
@@ -31,7 +35,7 @@ impl Iterator for RecordIterator {
             match self.entries.next() {
                 Some(Ok(entry)) => {
                     let path = entry.path();
-                    if path.extension().map_or(false, |ext| ext == "hea") {
+                    if path.extension().is_some_and(|ext| ext == "hea") {
                         return Some(Record::open(&path));
                     }
                 }
@@ -66,6 +70,10 @@ impl Iterator for RecordIterator {
 /// }
 /// # Ok::<(), wfdb::Error>(())
 /// ```
+///
+/// # Errors
+///
+/// Will return an error if the file(s) cannot be opened, read.
 pub fn open<P: AsRef<Path>>(path: P) -> Result<Box<dyn Iterator<Item = Result<Record>>>> {
     let path = path.as_ref();
     if path.is_dir() {
@@ -84,11 +92,11 @@ pub fn open<P: AsRef<Path>>(path: P) -> Result<Box<dyn Iterator<Item = Result<Re
 /// # Arguments
 ///
 /// * `path` - Path to the record (header file or record name).
-pub(crate) fn resolve_record_path<P: AsRef<Path>>(path: P) -> Result<(PathBuf, PathBuf, String)> {
+pub fn resolve_record_path<P: AsRef<Path>>(path: P) -> Result<(PathBuf, PathBuf, String)> {
     let path = path.as_ref();
 
-    if path.is_file() || path.extension().map_or(false, |ext| ext == "hea") {
-        if path.extension().map_or(false, |ext| ext == "hea") {
+    if path.is_file() || path.extension().is_some_and(|ext| ext == "hea") {
+        if path.extension().is_some_and(|ext| ext == "hea") {
             let dir = path
                 .parent()
                 .unwrap_or_else(|| Path::new("."))
@@ -96,7 +104,9 @@ pub(crate) fn resolve_record_path<P: AsRef<Path>>(path: P) -> Result<(PathBuf, P
             let name = path
                 .file_stem()
                 .and_then(|s| s.to_str())
-                .ok_or_else(|| Error::InvalidPath(format!("Invalid record path: {:?}", path)))?
+                .ok_or_else(|| {
+                    Error::InvalidPath(format!("Invalid record path: {}", path.display()))
+                })?
                 .to_string();
             Ok((path.to_path_buf(), dir, name))
         } else {
@@ -107,11 +117,13 @@ pub(crate) fn resolve_record_path<P: AsRef<Path>>(path: P) -> Result<(PathBuf, P
             let name = path
                 .file_stem()
                 .and_then(|s| s.to_str())
-                .ok_or_else(|| Error::InvalidPath(format!("Invalid record path: {:?}", path)))?
+                .ok_or_else(|| {
+                    Error::InvalidPath(format!("Invalid record path: {}", path.display()))
+                })?
                 .to_string();
 
             // Header path is dir/name.hea
-            let header_path = dir.join(format!("{}.hea", name));
+            let header_path = dir.join(format!("{name}.hea"));
             Ok((header_path, dir, name))
         }
     } else {
@@ -122,10 +134,10 @@ pub(crate) fn resolve_record_path<P: AsRef<Path>>(path: P) -> Result<(PathBuf, P
         let name = path
             .file_name()
             .and_then(|s| s.to_str())
-            .ok_or_else(|| Error::InvalidPath(format!("Invalid record path: {:?}", path)))?
+            .ok_or_else(|| Error::InvalidPath(format!("Invalid record path: {}", path.display())))?
             .to_string();
 
-        let header_path = if path.extension().map_or(false, |ext| ext == "hea") {
+        let header_path = if path.extension().is_some_and(|ext| ext == "hea") {
             path.to_path_buf()
         } else {
             path.with_extension("hea")

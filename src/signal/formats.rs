@@ -37,12 +37,12 @@ impl FormatDecoder for Format16Decoder {
         }
 
         let num_samples = (data.len() / 2).min(output.len());
-        for i in 0..num_samples {
-            let offset = i * 2;
-            let low = data[offset] as u16;
-            let high = data[offset + 1] as u16;
+        for (sample, bytes) in output.iter_mut().zip(data.chunks_exact(2)) {
+            let low = u16::from(bytes[0]);
+            let high = u16::from(bytes[1]);
             let value = (high << 8) | low;
-            output[i] = value as i16 as Sample;
+            // TODO: Handle error
+            *sample = Sample::from(i16::try_from(value).ok().unwrap_or(0));
         }
 
         Ok(num_samples)
@@ -70,9 +70,9 @@ impl FormatDecoder for Format212Decoder {
         for i in 0..num_complete_pairs {
             let offset = i * 3;
 
-            let byte0 = data[offset] as u16;
-            let byte1 = data[offset + 1] as u16;
-            let byte2 = data[offset + 2] as u16;
+            let byte0 = u16::from(data[offset]);
+            let byte1 = u16::from(data[offset + 1]);
+            let byte2 = u16::from(data[offset + 2]);
 
             // Sample 1: LSBs in byte 0, MSBs in low nibble of byte 1
             let sample0_raw = byte0 | ((byte1 & 0x0F) << 8);
@@ -82,24 +82,25 @@ impl FormatDecoder for Format212Decoder {
             let sample1_raw = byte2 | ((byte1 & 0xF0) << 4);
 
             // Sign extension for 12-bit values
+            // TODO: Handle error
             let sample0 = if sample0_raw & 0x800 != 0 {
-                (sample0_raw | 0xF000) as i16
+                i16::try_from(sample0_raw | 0xF000).ok().unwrap_or(0)
             } else {
-                sample0_raw as i16
+                i16::try_from(sample0_raw).ok().unwrap_or(0)
             };
 
             let sample1 = if sample1_raw & 0x800 != 0 {
-                (sample1_raw | 0xF000) as i16
+                i16::try_from(sample1_raw | 0xF000).ok().unwrap_or(0)
             } else {
-                sample1_raw as i16
+                i16::try_from(sample1_raw).ok().unwrap_or(0)
             };
 
-            output[output_idx] = sample0 as Sample;
+            output[output_idx] = Sample::from(sample0);
             output_idx += 1;
 
             // Only write second sample if we have space
             if output_idx < output.len() {
-                output[output_idx] = sample1 as Sample;
+                output[output_idx] = Sample::from(sample1);
                 output_idx += 1;
             }
         }
@@ -109,19 +110,20 @@ impl FormatDecoder for Format212Decoder {
         if output_idx < output.len() && data.len() >= (num_complete_pairs * 3 + 3) {
             let offset = num_complete_pairs * 3;
 
-            let byte0 = data[offset] as u16;
-            let byte1 = data[offset + 1] as u16;
+            let byte0 = u16::from(data[offset]);
+            let byte1 = u16::from(data[offset + 1]);
 
             // Decode only the first sample of the pair
             let sample0_raw = byte0 | ((byte1 & 0x0F) << 8);
 
+            // TODO: Handle error
             let sample0 = if sample0_raw & 0x800 != 0 {
-                (sample0_raw | 0xF000) as i16
+                i16::try_from(sample0_raw | 0xF000).ok().unwrap_or(0)
             } else {
-                sample0_raw as i16
+                i16::try_from(sample0_raw).ok().unwrap_or(0)
             };
 
-            output[output_idx] = sample0 as Sample;
+            output[output_idx] = Sample::from(sample0);
             output_idx += 1;
         }
 

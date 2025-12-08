@@ -1,0 +1,9 @@
+{
+  // Run clippy as check command
+  "rust-analyzer.check.command": "clippy",
+  // Match format style with `cargo fmt`
+  "editor.tabSize": 4,
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true,
+  "files.trimTrailingWhitespace": true,
+}

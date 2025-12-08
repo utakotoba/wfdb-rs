@@ -37,7 +37,11 @@ struct FileGroup {
 }
 
 impl SignalReader {
-    /// Creates a new SignalReader from a parsed header and a base directory.
+    /// Creates a new `SignalReader` from a parsed header and a base directory.
+    ///
+    /// # Errors
+    ///
+    /// Will return an error if the file cannot be opened, read, or if the format is unsupported.
     pub fn new(header: Header, base_dir: &Path) -> Result<Self> {
         let mut file_groups = Vec::new();
         let mut format0_signals = Vec::new();
@@ -74,7 +78,7 @@ impl SignalReader {
             let bytes_per_frame = match format {
                 SignalFormat::Format16 => indices.len() * 2,
                 SignalFormat::Format212 => {
-                    let pairs = (indices.len() + 1) / 2;
+                    let pairs = indices.len().div_ceil(2);
                     pairs * 3
                 }
                 SignalFormat::Format0 => 0,
@@ -105,20 +109,25 @@ impl SignalReader {
         })
     }
 
-    pub fn header(&self) -> &Header {
+    #[must_use]
+    pub const fn header(&self) -> &Header {
         &self.header
     }
 
     /// Reads the next vector of samples (one sample per signal).
     /// Returns `None` if end of record is reached.
+    ///
+    /// # Errors
+    ///
+    /// Will return an error if the file cannot be read, or if the data is invalid.
     pub fn read_frame(&mut self) -> Result<Option<Vec<Sample>>> {
         let num_signals = self.header.metadata.num_signals;
         let mut frame = vec![0; num_signals];
 
-        if let Some(ns) = self.header.metadata.num_samples {
-            if self.current_time >= ns {
-                return Ok(None);
-            }
+        if let Some(ns) = self.header.metadata.num_samples
+            && self.current_time >= ns
+        {
+            return Ok(None);
         }
 
         for group in &mut self.file_groups {

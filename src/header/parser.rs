@@ -5,6 +5,10 @@ use std::io::{BufRead, BufReader};
 use std::path::Path;
 
 /// Parses a WFDB header file.
+///
+/// # Errors
+///
+/// Will return an error if the file cannot be opened, read, or if the format is invalid.
 pub fn parse_header<P: AsRef<Path>>(path: P) -> Result<Header> {
     let file = File::open(path.as_ref())?;
     let reader = BufReader::new(file);
@@ -239,17 +243,9 @@ fn parse_signal_line(line: &str) -> Result<SignalInfo> {
     }
 
     if parts.len() > 6 {
-        // Checksum can be unsigned or signed (e.g. -1 for unknown, or just negative 16-bit value)
-        checksum = if let Ok(val) = parts[6].parse::<u16>() {
-            val
-        } else if let Ok(val) = parts[6].parse::<i16>() {
-            val as u16
-        } else {
-            return Err(Error::InvalidHeader(format!(
-                "Invalid checksum: {}",
-                parts[6]
-            )));
-        };
+        checksum = parts[6]
+            .parse()
+            .map_err(|_| Error::InvalidHeader(format!("Invalid checksum: {}", parts[6])))?;
     }
 
     // Field 7 is optionally block size. Field 8+ is description.

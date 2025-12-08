@@ -76,7 +76,7 @@ impl SignalFormat {
 
     /// Converts a `SignalFormat` enum to corresponding format code.
     #[must_use]
-    pub const fn code(&self) -> u16 {
+    pub const fn code(self) -> u16 {
         match self {
             Self::Format0 => 0,
             Self::Format8 => 8,
