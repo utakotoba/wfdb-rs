@@ -81,10 +81,6 @@ impl Metadata {
     /// Will return an error if the format of the record line is invalid.
     pub fn from_record_line(line: &str) -> Result<Self> {
         let line = line.trim();
-        if line.is_empty() {
-            return Err(Error::InvalidHeader("Empty record line".to_string()));
-        }
-
         let mut parts = line.split_whitespace();
 
         // Resolve first part: record name (required) and number of segments (optional)
@@ -122,6 +118,7 @@ impl Metadata {
 
     /// Parse optional fields by detecting their format.
     fn parse_optional_fields(fields: &[&str]) -> Result<OptionalFields> {
+        // Assign default values to all optional fields first
         let mut sampling_frequency = Self::DEFAULT_SAMPLING_FREQUENCY;
         let mut counter_frequency = None;
         let mut base_counter = None;
@@ -137,7 +134,7 @@ impl Metadata {
             match field_type {
                 FieldType::Frequency => {
                     (sampling_frequency, counter_frequency, base_counter) =
-                        Self::parse_frequency_field(Some(field))?;
+                        Self::parse_frequency_field(field)?;
                     state = ParseState::AfterFrequency;
                 }
                 FieldType::NumSamples => {
@@ -148,11 +145,11 @@ impl Metadata {
                     state = ParseState::AfterNumSamples;
                 }
                 FieldType::Time => {
-                    base_time = Self::parse_base_time(Some(field))?;
+                    base_time = Self::parse_base_time(field)?;
                     state = ParseState::AfterTime;
                 }
                 FieldType::Date => {
-                    base_date = Self::parse_base_date(Some(field))?;
+                    base_date = Self::parse_base_date(field)?;
                     state = ParseState::AfterDate;
                 }
             }
@@ -240,12 +237,7 @@ impl Metadata {
     }
 
     /// Parse frequency definitions (optional)
-    fn parse_frequency_field(field: Option<&str>) -> Result<(f64, Option<f64>, Option<f64>)> {
-        let Some(field) = field else {
-            // Return only default sampling frequency when omitted.
-            return Ok((Self::DEFAULT_SAMPLING_FREQUENCY, None, None));
-        };
-
+    fn parse_frequency_field(field: &str) -> Result<(f64, Option<f64>, Option<f64>)> {
         let (sampling_part, counter_part) = match field.split_once('/') {
             Some((s, c)) => (s, Some(c)),
             None => (field, None),
@@ -255,10 +247,24 @@ impl Metadata {
             .parse()
             .map_err(|e| Error::InvalidHeader(format!("Invalid sampling frequency: {e}")))?;
 
+        if sampling_frequency <= 0.0 {
+            return Err(Error::InvalidHeader(format!(
+                "Sampling frequency must be greater than zero, got {sampling_frequency}"
+            )));
+        }
+
         let (counter_frequency, base_counter) = match counter_part {
             Some(counter_str) => Self::parse_counter_frequency(counter_str)?,
             None => (None, None),
         };
+
+        if let Some(cf) = counter_frequency
+            && cf <= 0.0
+        {
+            return Err(Error::InvalidHeader(format!(
+                "Counter frequency must be greater than zero, got {cf}"
+            )));
+        }
 
         Ok((sampling_frequency, counter_frequency, base_counter))
     }
@@ -289,28 +295,18 @@ impl Metadata {
     }
 
     /// Parse time in HH:MM:SS format
-    fn parse_base_time(field: Option<&str>) -> Result<Option<NaiveTime>> {
-        match field {
-            Some(s) => {
-                let time = NaiveTime::parse_from_str(s, "%H:%M:%S").map_err(|_| {
-                    Error::InvalidHeader(format!("Invalid base time '{s}', expected HH:MM:SS"))
-                })?;
-                Ok(Some(time))
-            }
-            None => Ok(None),
-        }
+    fn parse_base_time(field: &str) -> Result<Option<NaiveTime>> {
+        let time = NaiveTime::parse_from_str(field, "%H:%M:%S").map_err(|_| {
+            Error::InvalidHeader(format!("Invalid base time '{field}', expected HH:MM:SS"))
+        })?;
+        Ok(Some(time))
     }
 
     /// Parse date in DD/MM/YYYY format
-    fn parse_base_date(field: Option<&str>) -> Result<Option<NaiveDate>> {
-        match field {
-            Some(s) => {
-                let date = NaiveDate::parse_from_str(s, "%d/%m/%Y").map_err(|_| {
-                    Error::InvalidHeader(format!("Invalid base date '{s}', expected DD/MM/YYYY"))
-                })?;
-                Ok(Some(date))
-            }
-            None => Ok(None),
-        }
+    fn parse_base_date(field: &str) -> Result<Option<NaiveDate>> {
+        let date = NaiveDate::parse_from_str(field, "%d/%m/%Y").map_err(|_| {
+            Error::InvalidHeader(format!("Invalid base date '{field}', expected DD/MM/YYYY"))
+        })?;
+        Ok(Some(date))
     }
 }

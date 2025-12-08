@@ -371,6 +371,56 @@ fn test_invalid_sampling_frequency() {
 }
 
 #[test]
+fn test_negative_sampling_frequency() {
+    let line = "rec 2 -100";
+    let result = Metadata::from_record_line(line);
+    assert!(
+        matches!(result, Err(Error::InvalidHeader(_))),
+        "Expected InvalidHeader error, got {result:?}"
+    );
+}
+
+#[test]
+fn test_invalid_counter_frequency() {
+    let line = "rec 2 500/abc";
+    let result = Metadata::from_record_line(line);
+    assert!(
+        matches!(result, Err(Error::InvalidHeader(_))),
+        "Expected InvalidHeader error, got {result:?}"
+    );
+}
+
+#[test]
+fn test_invalid_counter_frequency_with_base() {
+    let line = "rec 2 500/abc(100)";
+    let result = Metadata::from_record_line(line);
+    assert!(
+        matches!(result, Err(Error::InvalidHeader(_))),
+        "Expected InvalidHeader error, got {result:?}"
+    );
+}
+
+#[test]
+fn test_negative_counter_frequency() {
+    let line = "rec 2 500/-100";
+    let result = Metadata::from_record_line(line);
+    assert!(
+        matches!(result, Err(Error::InvalidHeader(_))),
+        "Expected InvalidHeader error, got {result:?}"
+    );
+}
+
+#[test]
+fn test_invalid_base_counter() {
+    let line = "rec 2 500/100(abc)";
+    let result = Metadata::from_record_line(line);
+    assert!(
+        matches!(result, Err(Error::InvalidHeader(_))),
+        "Expected InvalidHeader error, got {result:?}"
+    );
+}
+
+#[test]
 fn test_invalid_num_segments() {
     let line = "rec/abc 2";
     let result = Metadata::from_record_line(line);
@@ -383,6 +433,16 @@ fn test_invalid_num_segments() {
 #[test]
 fn test_missing_closing_paren() {
     let line = "rec 2 500/100(50";
+    let result = Metadata::from_record_line(line);
+    assert!(
+        matches!(result, Err(Error::InvalidHeader(_))),
+        "Expected InvalidHeader error, got {result:?}"
+    );
+}
+
+#[test]
+fn test_invalid_num_samples() {
+    let line = "rec 2 100 -1.5";
     let result = Metadata::from_record_line(line);
     assert!(
         matches!(result, Err(Error::InvalidHeader(_))),
