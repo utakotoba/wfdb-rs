@@ -71,11 +71,15 @@ pub struct Metadata {
 }
 
 impl Metadata {
+    // [Default values for part of optional fields]
+
     /// Default sampling frequency (Hz) when omitted from the record line.
     pub const DEFAULT_SAMPLING_FREQUENCY: f64 = 250.0;
 
     /// Default base counter (Hz) when omitted from the record line.
     pub const DEFAULT_BASE_COUNTER: f64 = 0.0;
+
+    // [Metadata decoding functions]
 
     /// Build a metadata from the record line (first line) of __WFDB__ header.
     ///
@@ -191,12 +195,17 @@ impl Metadata {
 
         // Date: DD/MM/YYYY pattern - contains two `/` separators
         if field.matches('/').count() == 2 {
-            if state >= ParseState::AfterDate {
-                return Err(Error::InvalidHeader(
-                    "Duplicate or out-of-order date field".to_string(),
-                ));
+            if state >= ParseState::AfterTime {
+                if state >= ParseState::AfterDate {
+                    return Err(Error::InvalidHeader(
+                        "Duplicate or out-of-order date field".to_string(),
+                    ));
+                }
+                return Ok(FieldType::Date);
             }
-            return Ok(FieldType::Date);
+            return Err(Error::InvalidHeader(
+                "Date field appears before time field".to_string(),
+            ));
         }
 
         // Frequency with counter: contains single `/` or `(`
@@ -281,14 +290,6 @@ impl Metadata {
             None => (None, None),
         };
 
-        if let Some(cf) = counter_frequency
-            && cf <= 0.0
-        {
-            return Err(Error::InvalidHeader(format!(
-                "Counter frequency must be greater than zero, got {cf}"
-            )));
-        }
-
         Ok((sampling_frequency, counter_frequency, base_counter))
     }
 
@@ -308,11 +309,22 @@ impl Metadata {
                 .parse()
                 .map_err(|e| Error::InvalidHeader(format!("Invalid base counter value: {e}")))?;
 
+            // TODO: need to verify the behavior of the official C implementation
+            if counter_freq <= 0.0 {
+                return Ok((None, None));
+            }
+
             Ok((Some(counter_freq), Some(base_counter)))
         } else {
             let counter_freq = field
                 .parse()
                 .map_err(|e| Error::InvalidHeader(format!("Invalid counter frequency: {e}")))?;
+
+            // TODO: need to verify the behavior of the official C implementation
+            if counter_freq <= 0.0 {
+                return Ok((None, None));
+            }
+
             Ok((Some(counter_freq), None))
         }
     }
@@ -331,5 +343,63 @@ impl Metadata {
             Error::InvalidHeader(format!("Invalid base date '{field}', expected DD/MM/YYYY"))
         })?;
         Ok(Some(date))
+    }
+
+    // [Accessors]
+
+    /// Get the record name of the metadata.
+    #[must_use]
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    /// Get the number of segments of the metadata.
+    #[must_use]
+    pub const fn num_segments(&self) -> Option<usize> {
+        self.num_segments
+    }
+
+    /// Get the number of signals of the metadata.
+    #[must_use]
+    pub const fn num_signals(&self) -> usize {
+        self.num_signals
+    }
+
+    /// Get the sampling frequency of the metadata.
+    #[must_use]
+    pub fn sampling_frequency(&self) -> f64 {
+        self.sampling_frequency
+            .unwrap_or(Self::DEFAULT_SAMPLING_FREQUENCY)
+    }
+
+    /// Get the counter frequency of the metadata.
+    #[must_use]
+    pub fn counter_frequency(&self) -> f64 {
+        self.counter_frequency
+            .unwrap_or_else(|| self.sampling_frequency())
+    }
+
+    /// Get the base counter of the metadata.
+    #[must_use]
+    pub fn base_counter(&self) -> f64 {
+        self.base_counter.unwrap_or(Self::DEFAULT_BASE_COUNTER)
+    }
+
+    /// Get the number of samples of the metadata.
+    #[must_use]
+    pub const fn num_samples(&self) -> Option<u64> {
+        self.num_samples
+    }
+
+    /// Get the base time of the metadata.
+    #[must_use]
+    pub const fn base_time(&self) -> Option<NaiveTime> {
+        self.base_time
+    }
+
+    /// Get the base date of the metadata.
+    #[must_use]
+    pub const fn base_date(&self) -> Option<NaiveDate> {
+        self.base_date
     }
 }
