@@ -366,6 +366,8 @@ impl Metadata {
     }
 
     /// Get the sampling frequency of the metadata.
+    ///
+    /// Fallback to the default sampling frequency when omitted.
     #[must_use]
     pub fn sampling_frequency(&self) -> f64 {
         self.sampling_frequency
@@ -373,6 +375,8 @@ impl Metadata {
     }
 
     /// Get the counter frequency of the metadata.
+    ///
+    /// Fallback to the sampling frequency when omitted.
     #[must_use]
     pub fn counter_frequency(&self) -> f64 {
         self.counter_frequency
@@ -380,6 +384,8 @@ impl Metadata {
     }
 
     /// Get the base counter of the metadata.
+    ///
+    /// Fallback to the default base counter when omitted.
     #[must_use]
     pub fn base_counter(&self) -> f64 {
         self.base_counter.unwrap_or(Self::DEFAULT_BASE_COUNTER)
