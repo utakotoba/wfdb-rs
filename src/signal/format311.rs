@@ -98,4 +98,10 @@ impl FormatDecoder for Format311Decoder {
         // Variable: 4/3 bytes per sample on average
         None
     }
+
+    fn bytes_per_frame(&self, num_signals: usize) -> Option<usize> {
+        // Format311: 4 bytes per 3 samples
+        // For N signals: ceil(N/3) * 4 bytes per frame
+        Some(num_signals.div_ceil(3) * 4)
+    }
 }

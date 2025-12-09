@@ -1,4 +1,4 @@
-use crate::{Error, Result, SignalFormat};
+use crate::{Error, Result, Sample, SignalFormat};
 
 /// Parsed format field components.
 ///
@@ -14,8 +14,8 @@ struct OptionalFields {
     units: Option<String>,
     adc_resolution: Option<u8>,
     adc_zero: Option<i32>,
-    initial_value: Option<i32>,
-    checksum: Option<i16>,
+    initial_value: Option<Sample>,
+    checksum: Option<i32>,
     block_size: Option<i32>,
     description: Option<String>,
 }
@@ -82,9 +82,9 @@ pub struct SignalInfo {
     /// ADC zero value (center of ADC range).
     pub adc_zero: Option<i32>,
     /// Initial sample value (for difference formats).
-    pub initial_value: Option<i32>,
-    /// 16-bit checksum of all samples.
-    pub checksum: Option<i16>,
+    pub initial_value: Option<Sample>,
+    /// Checksum of all samples.
+    pub checksum: Option<i32>,
     /// Block size in bytes for special files (usually 0).
     pub block_size: Option<i32>,
     /// Human-readable description of the signal.
@@ -372,7 +372,7 @@ impl SignalInfo {
                 }
             }
             ParseState::AfterInitial => {
-                if field.parse::<i16>().is_ok() {
+                if field.parse::<i32>().is_ok() {
                     Ok(FieldType::Checksum)
                 } else {
                     Err(Error::InvalidHeader(format!(
@@ -408,14 +408,14 @@ impl SignalInfo {
     }
 
     /// Parse initial value field.
-    fn parse_initial_value(field: &str) -> Result<i32> {
+    fn parse_initial_value(field: &str) -> Result<Sample> {
         field
             .parse()
             .map_err(|e| Error::InvalidHeader(format!("Invalid initial value: {e}")))
     }
 
     /// Parse checksum field.
-    fn parse_checksum(field: &str) -> Result<i16> {
+    fn parse_checksum(field: &str) -> Result<i32> {
         field
             .parse()
             .map_err(|e| Error::InvalidHeader(format!("Invalid checksum: {e}")))
@@ -580,13 +580,13 @@ impl SignalInfo {
     ///
     /// Fallback to the ADC zero value when omitted.
     #[must_use]
-    pub fn initial_value(&self) -> i32 {
+    pub fn initial_value(&self) -> Sample {
         self.initial_value.unwrap_or_else(|| self.adc_zero())
     }
 
     /// Get the checksum of the signal.
     #[must_use]
-    pub const fn checksum(&self) -> Option<i16> {
+    pub const fn checksum(&self) -> Option<i32> {
         self.checksum
     }
 

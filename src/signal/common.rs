@@ -119,6 +119,19 @@ pub trait FormatDecoder: Send {
         None
     }
 
+    /// Get the number of bytes required for one frame of interleaved signals.
+    ///
+    /// A frame contains one sample from each of `num_signals` signals stored
+    /// in an interleaved format. This is used for seeking in files with
+    /// multiple interleaved signals.
+    ///
+    /// Default implementation works for fixed-size formats by multiplying
+    /// `bytes_per_sample()` by `num_signals`. Variable-size formats should
+    /// override this method.
+    fn bytes_per_frame(&self, num_signals: usize) -> Option<usize> {
+        self.bytes_per_sample().map(|bps| bps * num_signals)
+    }
+
     /// Create an iterator over samples from this decoder (most flexible API).
     ///
     /// Returns an iterator that lazily decodes samples one at a time from the reader.

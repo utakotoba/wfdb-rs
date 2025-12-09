@@ -27,7 +27,7 @@ fn test_minimal_signal_line() {
 
 #[test]
 fn test_mit_bih_signal_line() {
-    let line = "100.dat 212 200 11 1024 995 -22131 0 MLII";
+    let line = "100.dat 212 200 11 1024 995 43405 0 MLII";
     let signal = SignalInfo::from_signal_line(line).unwrap();
     let expected = SignalInfo {
         file_name: "100.dat".to_string(),
@@ -41,7 +41,7 @@ fn test_mit_bih_signal_line() {
         adc_resolution: Some(11),
         adc_zero: Some(1024),
         initial_value: Some(995),
-        checksum: Some(-22131),
+        checksum: Some(43405),
         block_size: Some(0),
         description: Some("MLII".to_string()),
     };
@@ -50,7 +50,7 @@ fn test_mit_bih_signal_line() {
 
 #[test]
 fn test_aha_signal_line() {
-    let line = "data0 8 100 10 0 -53 -1279 0 ECG signal 0";
+    let line = "data0 8 100 10 0 -53 64257 0 ECG signal 0";
     let signal = SignalInfo::from_signal_line(line).unwrap();
     let expected = SignalInfo {
         file_name: "data0".to_string(),
@@ -64,7 +64,7 @@ fn test_aha_signal_line() {
         adc_resolution: Some(10),
         adc_zero: Some(0),
         initial_value: Some(-53),
-        checksum: Some(-1279),
+        checksum: Some(64257),
         block_size: Some(0),
         description: Some("ECG signal 0".to_string()),
     };
@@ -231,7 +231,7 @@ fn test_exponential_notation_gain() {
 
 #[test]
 fn test_complete_adc_spec() {
-    let line = "sig.dat 16 200(1024)/mV 12 2048 100 -5000 0";
+    let line = "sig.dat 16 200(1024)/mV 12 2048 100 60536 0";
     let signal = SignalInfo::from_signal_line(line).unwrap();
     assert_eq!(signal.adc_gain, Some(200.0));
     assert_eq!(signal.baseline, Some(1024));
@@ -239,19 +239,19 @@ fn test_complete_adc_spec() {
     assert_eq!(signal.adc_resolution, Some(12));
     assert_eq!(signal.adc_zero, Some(2048));
     assert_eq!(signal.initial_value, Some(100));
-    assert_eq!(signal.checksum, Some(-5000));
+    assert_eq!(signal.checksum, Some(60536));
     assert_eq!(signal.block_size, Some(0));
 }
 
 #[test]
 fn test_adc_spec_with_description() {
-    let line = "sig.dat 16 200 12 2048 100 -5000 0 Lead II";
+    let line = "sig.dat 16 200 12 2048 100 60536 0 Lead II";
     let signal = SignalInfo::from_signal_line(line).unwrap();
     assert_eq!(signal.adc_gain, Some(200.0));
     assert_eq!(signal.adc_resolution, Some(12));
     assert_eq!(signal.adc_zero, Some(2048));
     assert_eq!(signal.initial_value, Some(100));
-    assert_eq!(signal.checksum, Some(-5000));
+    assert_eq!(signal.checksum, Some(60536));
     assert_eq!(signal.block_size, Some(0));
     assert_eq!(signal.description, Some("Lead II".to_string()));
 }
@@ -361,7 +361,7 @@ fn create_minimal_signal() -> SignalInfo {
 /// Helper function to create full signal info.
 #[allow(clippy::unwrap_used)]
 fn create_full_signal() -> SignalInfo {
-    let line = "sig.dat 212x2:50+512 200(1024)/uV 12 2048 100 -5000 4096 ECG Lead II";
+    let line = "sig.dat 212x2:50+512 200(1024)/uV 12 2048 100 60536 4096 ECG Lead II";
     SignalInfo::from_signal_line(line).unwrap()
 }
 
@@ -465,7 +465,7 @@ fn test_checksum_accessor() {
     let signal = create_minimal_signal();
     assert_eq!(signal.checksum(), None);
     let signal = create_full_signal();
-    assert_eq!(signal.checksum(), Some(-5000));
+    assert_eq!(signal.checksum(), Some(60536));
 }
 
 #[test]
@@ -689,9 +689,9 @@ fn test_invalid_block_size_after_checksum() {
 
 #[test]
 fn test_negative_checksum() {
-    let line = "sig.dat 16 200 12 2048 100 -32768 0";
+    let line = "sig.dat 16 200 12 2048 100 32768 0";
     let signal = SignalInfo::from_signal_line(line).unwrap();
-    assert_eq!(signal.checksum, Some(-32768));
+    assert_eq!(signal.checksum, Some(32768));
 }
 
 #[test]

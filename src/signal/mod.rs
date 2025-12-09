@@ -38,7 +38,7 @@
 //! - Format 310: Packed 10-bit samples (3 samples in 4 bytes)
 //! - Format 311: Packed 10-bit samples (alternative layout)
 //!
-//! > FLAC-based formats are not supported yet.
+//! > _FLAC-based formats are not supported yet._
 //!
 //! # Examples
 //!

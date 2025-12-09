@@ -271,7 +271,7 @@ fn test_num_signals_accessor() {
 #[test]
 fn test_mit_bih_style_header() {
     let header_text = "100 2 360 650000\n\
-                      100.dat 212 200 11 1024 995 -22131 0 MLII\n\
+                      100.dat 212 200 11 1024 995 43405 0 MLII\n\
                       100.dat 212 200 11 1024 1011 20052 0 V5\n\
                       # 69 M 1085 1629 x1\n\
                       # Aldomet, Inderal\n";
@@ -293,7 +293,7 @@ fn test_mit_bih_style_header() {
 #[test]
 fn test_aha_db_style_header() {
     let header_text = "7001 2 250 525000\n\
-                      data0 8 100 10 0 -53 -1279 0 ECG signal 0\n\
+                      data0 8 100 10 0 -53 64257 0 ECG signal 0\n\
                       data1 8 100 10 0 -69 15626 0 ECG signal 1\n";
 
     let mut reader = Cursor::new(header_text);
