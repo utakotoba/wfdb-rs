@@ -182,7 +182,7 @@ impl Header {
             while line_idx < lines.len() && signal_specs.len() < num_signals {
                 let line = lines[line_idx].trim();
 
-                // Skip comments (but they shouldn't appear before all signals are read)
+                // Skip comments
                 if line.is_empty() || line.starts_with('#') {
                     line_idx += 1;
                     continue;
@@ -203,7 +203,7 @@ impl Header {
             (Some(signal_specs), None)
         };
 
-        // Parse info strings (trailing comment lines)
+        // Parse info strings
         let mut info_strings = Vec::new();
 
         while line_idx < lines.len() {

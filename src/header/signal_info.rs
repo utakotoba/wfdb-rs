@@ -20,6 +20,20 @@ struct OptionalFields {
     description: Option<String>,
 }
 
+/// Type of optional field detected by format.
+///
+/// __INTERNAL USE ONLY__
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum FieldType {
+    Gain,
+    Resolution,
+    AdcZero,
+    InitialValue,
+    Checksum,
+    BlockSize,
+    Description,
+}
+
 /// Parsing state for optional fields in signal specification lines.
 ///
 /// __INTERNAL USE ONLY__
@@ -221,7 +235,6 @@ impl SignalInfo {
     }
 
     /// Parse optional fields following the format field.
-    #[allow(clippy::too_many_lines)]
     fn parse_optional_fields(fields: &[&str]) -> Result<OptionalFields> {
         // Return early if no optional fields
         if fields.is_empty() {
@@ -249,92 +262,40 @@ impl SignalInfo {
         let mut description = None;
 
         let mut state = ParseState::Start;
-        let mut field_idx = 0;
 
-        while field_idx < fields.len() {
-            let field = fields[field_idx];
+        for (field_idx, field) in fields.iter().enumerate() {
+            let field_type = Self::detect_field_type(field, state)?;
 
-            match state {
-                ParseState::Start => {
-                    // First optional field should be ADC gain or description
-                    if let Ok((gain, base, unit)) = Self::parse_gain_field(field) {
-                        adc_gain = gain;
-                        baseline = base;
-                        units = unit;
-                        state = ParseState::AfterGain;
-                    } else if let Ok(num) = field.parse::<i32>() {
-                        // Could be block size with description following
-                        block_size = Some(num);
-                        state = ParseState::AfterBlockSize;
-                    } else {
-                        // Treat as description
-                        description = Some(Self::join_description(&fields[field_idx..]));
-                        break;
-                    }
+            match field_type {
+                FieldType::Gain => {
+                    (adc_gain, baseline, units) = Self::parse_gain_field(field)?;
+                    state = ParseState::AfterGain;
                 }
-                ParseState::AfterGain => {
-                    // After gain: expect ADC resolution (integer)
-                    if let Ok(res) = field.parse::<u8>() {
-                        adc_resolution = Some(res);
-                        state = ParseState::AfterResolution;
-                    } else {
-                        return Err(Error::InvalidHeader(format!(
-                            "Expected ADC resolution after gain, found '{field}'"
-                        )));
-                    }
+                FieldType::Resolution => {
+                    adc_resolution = Some(Self::parse_resolution(field)?);
+                    state = ParseState::AfterResolution;
                 }
-                ParseState::AfterResolution => {
-                    // After resolution: expect ADC zero (integer)
-                    if let Ok(zero) = field.parse::<i32>() {
-                        adc_zero = Some(zero);
-                        state = ParseState::AfterZero;
-                    } else {
-                        return Err(Error::InvalidHeader(format!(
-                            "Expected ADC zero after resolution, found '{field}'"
-                        )));
-                    }
+                FieldType::AdcZero => {
+                    adc_zero = Some(Self::parse_adc_zero(field)?);
+                    state = ParseState::AfterZero;
                 }
-                ParseState::AfterZero => {
-                    // After zero: expect initial value (integer)
-                    if let Ok(init) = field.parse::<i32>() {
-                        initial_value = Some(init);
-                        state = ParseState::AfterInitial;
-                    } else {
-                        return Err(Error::InvalidHeader(format!(
-                            "Expected initial value after ADC zero, found '{field}'"
-                        )));
-                    }
+                FieldType::InitialValue => {
+                    initial_value = Some(Self::parse_initial_value(field)?);
+                    state = ParseState::AfterInitial;
                 }
-                ParseState::AfterInitial => {
-                    // After initial: expect checksum (integer)
-                    if let Ok(cs) = field.parse::<i16>() {
-                        checksum = Some(cs);
-                        state = ParseState::AfterChecksum;
-                    } else {
-                        return Err(Error::InvalidHeader(format!(
-                            "Expected checksum after initial value, found '{field}'"
-                        )));
-                    }
+                FieldType::Checksum => {
+                    checksum = Some(Self::parse_checksum(field)?);
+                    state = ParseState::AfterChecksum;
                 }
-                ParseState::AfterChecksum => {
-                    // After checksum: expect block size (integer)
-                    if let Ok(bs) = field.parse::<i32>() {
-                        block_size = Some(bs);
-                        state = ParseState::AfterBlockSize;
-                    } else {
-                        return Err(Error::InvalidHeader(format!(
-                            "Expected block size after checksum, found '{field}'"
-                        )));
-                    }
+                FieldType::BlockSize => {
+                    block_size = Some(Self::parse_block_size(field)?);
+                    state = ParseState::AfterBlockSize;
                 }
-                ParseState::AfterBlockSize => {
-                    // After block size: everything else is description
+                FieldType::Description => {
                     description = Some(Self::join_description(&fields[field_idx..]));
                     break;
                 }
             }
-
-            field_idx += 1;
         }
 
         Ok(OptionalFields {
@@ -348,6 +309,123 @@ impl SignalInfo {
             block_size,
             description,
         })
+    }
+
+    /// Detect the type of an optional field based on its format and current parse state.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if a field appears out of order or is duplicated.
+    fn detect_field_type(field: &str, state: ParseState) -> Result<FieldType> {
+        match state {
+            ParseState::Start => {
+                // Try to detect gain field (has '/' or '(' or is valid positive float)
+                if field.contains('/') || field.contains('(') {
+                    // Check if it's a valid gain field
+                    if Self::parse_gain_field(field).is_ok() {
+                        Ok(FieldType::Gain)
+                    } else {
+                        Ok(FieldType::Description)
+                    }
+                } else if let Ok(val) = field.parse::<f64>() {
+                    // Positive float is gain, zero or negative is block_size
+                    if val > 0.0 {
+                        Ok(FieldType::Gain)
+                    } else if field.parse::<i32>().is_ok() {
+                        Ok(FieldType::BlockSize)
+                    } else {
+                        Ok(FieldType::Description)
+                    }
+                } else if field.parse::<i32>().is_ok() {
+                    // Plain integer is block size
+                    Ok(FieldType::BlockSize)
+                } else {
+                    // Non-numeric is description
+                    Ok(FieldType::Description)
+                }
+            }
+            ParseState::AfterGain => {
+                if field.parse::<u8>().is_ok() {
+                    Ok(FieldType::Resolution)
+                } else {
+                    Err(Error::InvalidHeader(format!(
+                        "Expected ADC resolution after gain, found '{field}'"
+                    )))
+                }
+            }
+            ParseState::AfterResolution => {
+                if field.parse::<i32>().is_ok() {
+                    Ok(FieldType::AdcZero)
+                } else {
+                    Err(Error::InvalidHeader(format!(
+                        "Expected ADC zero after resolution, found '{field}'"
+                    )))
+                }
+            }
+            ParseState::AfterZero => {
+                if field.parse::<i32>().is_ok() {
+                    Ok(FieldType::InitialValue)
+                } else {
+                    Err(Error::InvalidHeader(format!(
+                        "Expected initial value after ADC zero, found '{field}'"
+                    )))
+                }
+            }
+            ParseState::AfterInitial => {
+                if field.parse::<i16>().is_ok() {
+                    Ok(FieldType::Checksum)
+                } else {
+                    Err(Error::InvalidHeader(format!(
+                        "Expected checksum after initial value, found '{field}'"
+                    )))
+                }
+            }
+            ParseState::AfterChecksum => {
+                if field.parse::<i32>().is_ok() {
+                    Ok(FieldType::BlockSize)
+                } else {
+                    Err(Error::InvalidHeader(format!(
+                        "Expected block size after checksum, found '{field}'"
+                    )))
+                }
+            }
+            ParseState::AfterBlockSize => Ok(FieldType::Description),
+        }
+    }
+
+    /// Parse ADC resolution field.
+    fn parse_resolution(field: &str) -> Result<u8> {
+        field
+            .parse()
+            .map_err(|e| Error::InvalidHeader(format!("Invalid ADC resolution: {e}")))
+    }
+
+    /// Parse ADC zero field.
+    fn parse_adc_zero(field: &str) -> Result<i32> {
+        field
+            .parse()
+            .map_err(|e| Error::InvalidHeader(format!("Invalid ADC zero: {e}")))
+    }
+
+    /// Parse initial value field.
+    fn parse_initial_value(field: &str) -> Result<i32> {
+        field
+            .parse()
+            .map_err(|e| Error::InvalidHeader(format!("Invalid initial value: {e}")))
+    }
+
+    /// Parse checksum field.
+    fn parse_checksum(field: &str) -> Result<i16> {
+        field
+            .parse()
+            .map_err(|e| Error::InvalidHeader(format!("Invalid checksum: {e}")))
+    }
+
+    /// Parse block size field.
+    fn parse_block_size(field: &str) -> Result<i32> {
+        field
+            .parse()
+            .map_err(|e| Error::InvalidHeader(format!("Invalid block size: {e}")))
     }
 
     /// Parse ADC gain field: `gain[(baseline)][/units]`
