@@ -526,16 +526,6 @@ fn test_zero_num_segments() {
 }
 
 #[test]
-fn test_zero_num_signals() {
-    let line = "rec 0";
-    let result = Metadata::from_record_line(line);
-    assert!(
-        matches!(result, Err(Error::InvalidHeader(_))),
-        "Expected InvalidHeader error, got {result:?}"
-    );
-}
-
-#[test]
 fn test_missing_num_signals() {
     let result = Metadata::from_record_line("record");
     assert!(

@@ -103,11 +103,6 @@ impl Metadata {
             .ok_or_else(|| Error::InvalidHeader("Missing number of signals".to_string()))?
             .parse()
             .map_err(|e| Error::InvalidHeader(format!("Invalid number of signals: {e}")))?;
-        if num_signals == 0 {
-            return Err(Error::InvalidHeader(
-                "Number of signals must be greater than zero".to_string(),
-            ));
-        }
 
         // Collect remaining optional fields
         let remaining: Vec<&str> = parts.collect();
