@@ -9,10 +9,10 @@ pub mod signal;
 
 // Internal module declaration
 mod common;
+mod error;
 // mod record;
-mod shared;
 
 pub use common::*;
+pub use error::Error;
 pub use header::{Header, Metadata, SegmentInfo, SignalInfo};
 // pub use record::{Record, open};
-pub use shared::*;

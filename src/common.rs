@@ -1,4 +1,20 @@
-use crate::{Error, Result};
+use crate::Error;
+
+/// A specialized `Result` type for the WFDB library with its `Error` enum.
+pub type Result<T> = std::result::Result<T, Error>;
+
+/// A single **sample value** from a waveform signal.
+///
+/// This type uses an `i32` to accommodate the maximum size and range of all
+/// signal data formats defined in the WFDB standard.
+///
+/// All signal data read will be stored internally as a `Sample`. When the data is
+/// encoded back into bytes for a specific WFDB format, the value will be
+/// downcast to the actual required size.
+pub type Sample = i32;
+
+/// A single **time value** from a waveform signal.
+pub type Time = i64;
 
 /// The format of a waveform signal data.
 ///
