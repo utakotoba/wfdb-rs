@@ -2,7 +2,7 @@
 //!
 //! This module provides functionality for reading WFDB signal files.
 
-mod formats;
-mod reader;
+// mod formats;
+// mod reader;
 
-pub use reader::SignalReader;
+// pub use reader::SignalReader;
