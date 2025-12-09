@@ -13,6 +13,6 @@ mod record;
 mod shared;
 
 pub use common::*;
-pub use header::Metadata;
+pub use header::{Metadata, SignalInfo};
 pub use record::{Record, open};
 pub use shared::*;

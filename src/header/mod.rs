@@ -4,6 +4,8 @@
 
 mod metadata;
 mod parser;
+mod signal_info;
 
 pub use metadata::Metadata;
 pub use parser::*;
+pub use signal_info::SignalInfo;
