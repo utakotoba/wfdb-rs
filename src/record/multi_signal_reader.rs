@@ -29,6 +29,8 @@ pub struct MultiSignalReader {
     num_signals: usize,
     /// Mapping from signal index to (`group_index`, `index_within_group`).
     signal_to_group: Vec<(usize, usize)>,
+    /// Current frame position.
+    current_frame: u64,
 }
 
 impl MultiSignalReader {
@@ -102,6 +104,7 @@ impl MultiSignalReader {
             groups,
             num_signals: signals.len(),
             signal_to_group,
+            current_frame: 0,
         })
     }
 
@@ -140,6 +143,7 @@ impl MultiSignalReader {
             }
         }
 
+        self.current_frame += 1;
         Ok(frame)
     }
 
@@ -236,15 +240,13 @@ impl MultiSignalReader {
             group.decoder.reset();
         }
 
+        self.current_frame = frame;
         Ok(frame)
     }
 
     /// Get current frame position.
-    ///
-    /// Note: This assumes all groups are at the same frame position.
-    /// Returns 0 if no frames have been read yet.
     #[must_use]
     pub const fn position(&self) -> u64 {
-        0 // TODO: Track position across all groups
+        self.current_frame
     }
 }

@@ -101,6 +101,8 @@ pub struct SignalReader {
     bytes_per_sample: usize,
     /// Initial file offset (to calculate absolute positions).
     initial_offset: u64,
+    /// Sampling frequency (for time-based seeking).
+    sampling_frequency: Option<f64>,
 }
 
 impl SignalReader {
@@ -116,6 +118,7 @@ impl SignalReader {
         signal_info: &SignalInfo,
         all_signals: &[SignalInfo],
         signal_index: usize,
+        sampling_frequency: Option<f64>,
     ) -> Result<Self> {
         // Resolve signal file path
         let signal_path = base_path.join(&signal_info.file_name);
@@ -174,6 +177,7 @@ impl SignalReader {
             current_sample: 0,
             bytes_per_sample,
             initial_offset,
+            sampling_frequency,
         })
     }
 
@@ -495,21 +499,18 @@ impl SignalReader {
     /// # Errors
     ///
     /// Returns an error if:
+    /// - Sampling frequency is not available
     /// - Seeking is not supported for this format
     /// - The seek operation fails
-    ///
-    /// # Note
-    ///
-    /// This method requires access to the record's sampling frequency,
-    /// which should be stored in the signal info. Currently this is a placeholder.
-    #[allow(dead_code)]
-    pub fn seek_to_time(&mut self, _seconds: f64) -> Result<u64> {
-        // TODO: Implement when we have access to sampling frequency
-        // let sample = (seconds * sampling_frequency).round() as u64;
-        // self.seek_to_sample(sample)
-        Err(Error::InvalidHeader(
-            "Time-based seeking not yet implemented".to_string(),
-        ))
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+    pub fn seek_to_time(&mut self, seconds: f64) -> Result<u64> {
+        let freq = self.sampling_frequency.ok_or_else(|| {
+            Error::InvalidHeader(
+                "Sampling frequency not available for time-based seeking".to_string(),
+            )
+        })?;
+        let sample = (seconds * freq).round() as u64;
+        self.seek_to_sample(sample)
     }
 }
 

@@ -260,11 +260,14 @@ impl Record {
             )));
         }
 
+        let sampling_frequency = Some(self.metadata().sampling_frequency());
+
         SignalReader::new(
             &self.base_path,
             &signals[signal_index],
             signals,
             signal_index,
+            sampling_frequency,
         )
     }
 

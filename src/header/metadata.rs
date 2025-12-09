@@ -304,7 +304,6 @@ impl Metadata {
                 .parse()
                 .map_err(|e| Error::InvalidHeader(format!("Invalid base counter value: {e}")))?;
 
-            // TODO: need to verify the behavior of the official C implementation
             if counter_freq <= 0.0 {
                 return Ok((None, None));
             }
@@ -315,7 +314,6 @@ impl Metadata {
                 .parse()
                 .map_err(|e| Error::InvalidHeader(format!("Invalid counter frequency: {e}")))?;
 
-            // TODO: need to verify the behavior of the official C implementation
             if counter_freq <= 0.0 {
                 return Ok((None, None));
             }
