@@ -15,8 +15,8 @@ The basic decoding of Waveform Database (WFDB) format files is implemented.
 > This library is not stable; it may not handle all kinds of waveform database files. I'm working on testing the library on more datasets in WFDB format, but it still takes some time to finish. If you find some problem processing your datasets, feel free to open an issue or PR.
 
 - [x] Header format parser
-- [x] Essential signal formats decoding support: Format 0, Format 16 and Format 212
-- [ ] Rust-flavored API instead of C-style API
+- [x] Essential signal formats decoding support: _All format excluded FLAC-compressed formats_
+- [x] Rust-flavored API instead of C-style API
 - [ ] FLAC-compressed signal formats support (Format 508, Format 516 and Format 524)
 - [ ] Annotations and signals matching
 - [ ] WebAssembly compatibility
