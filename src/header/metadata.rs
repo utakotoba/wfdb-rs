@@ -6,7 +6,7 @@ use crate::{Error, Result};
 ///
 /// __INTERNAL USE ONLY__
 struct OptionalFields {
-    sampling_frequency: f64,
+    sampling_frequency: Option<f64>,
     counter_frequency: Option<f64>,
     base_counter: Option<f64>,
     num_samples: Option<u64>,
@@ -57,7 +57,7 @@ pub struct Metadata {
     /// Number of signals described in the header.
     pub num_signals: usize,
     /// Samples per second (Hz) per signal.
-    pub sampling_frequency: f64,
+    pub sampling_frequency: Option<f64>,
     /// Frequency (Hz) for counter (secondary clock).
     pub counter_frequency: Option<f64>,
     /// Offset value for counter.
@@ -73,6 +73,9 @@ pub struct Metadata {
 impl Metadata {
     /// Default sampling frequency (Hz) when omitted from the record line.
     pub const DEFAULT_SAMPLING_FREQUENCY: f64 = 250.0;
+
+    /// Default base counter (Hz) when omitted from the record line.
+    pub const DEFAULT_BASE_COUNTER: f64 = 0.0;
 
     /// Build a metadata from the record line (first line) of __WFDB__ header.
     ///
@@ -96,6 +99,11 @@ impl Metadata {
             .ok_or_else(|| Error::InvalidHeader("Missing number of signals".to_string()))?
             .parse()
             .map_err(|e| Error::InvalidHeader(format!("Invalid number of signals: {e}")))?;
+        if num_signals == 0 {
+            return Err(Error::InvalidHeader(
+                "Number of signals must be greater than zero".to_string(),
+            ));
+        }
 
         // Collect remaining optional fields
         let remaining: Vec<&str> = parts.collect();
@@ -119,7 +127,7 @@ impl Metadata {
     /// Parse optional fields by detecting their format.
     fn parse_optional_fields(fields: &[&str]) -> Result<OptionalFields> {
         // Assign default values to all optional fields first
-        let mut sampling_frequency = Self::DEFAULT_SAMPLING_FREQUENCY;
+        let mut sampling_frequency = None;
         let mut counter_frequency = None;
         let mut base_counter = None;
         let mut num_samples = None;
@@ -218,6 +226,11 @@ impl Metadata {
                 let num_segments = num_segments.parse().map_err(|e| {
                     Error::InvalidHeader(format!("Invalid number of segments: {e}"))
                 })?;
+                if num_segments == 0 {
+                    return Err(Error::InvalidHeader(
+                        "Number of segments must be greater than zero".to_string(),
+                    ));
+                }
                 (name, Some(num_segments))
             }
             None => (field, None),
@@ -237,17 +250,27 @@ impl Metadata {
     }
 
     /// Parse frequency definitions (optional)
-    fn parse_frequency_field(field: &str) -> Result<(f64, Option<f64>, Option<f64>)> {
+    fn parse_frequency_field(field: &str) -> Result<(Option<f64>, Option<f64>, Option<f64>)> {
         let (sampling_part, counter_part) = match field.split_once('/') {
             Some((s, c)) => (s, Some(c)),
             None => (field, None),
         };
 
-        let sampling_frequency = sampling_part
-            .parse()
-            .map_err(|e| Error::InvalidHeader(format!("Invalid sampling frequency: {e}")))?;
+        if sampling_part.is_empty() {
+            return Err(Error::InvalidHeader(
+                "Sampling frequency is empty".to_string(),
+            ));
+        }
 
-        if sampling_frequency <= 0.0 {
+        let sampling_frequency = Some(
+            sampling_part
+                .parse()
+                .map_err(|e| Error::InvalidHeader(format!("Invalid sampling frequency: {e}")))?,
+        );
+
+        if let Some(sampling_frequency) = sampling_frequency
+            && sampling_frequency <= 0.0
+        {
             return Err(Error::InvalidHeader(format!(
                 "Sampling frequency must be greater than zero, got {sampling_frequency}"
             )));

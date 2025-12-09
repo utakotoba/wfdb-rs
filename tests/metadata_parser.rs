@@ -11,7 +11,7 @@ fn test_minimal_record_line() {
         name: "record_001".to_string(),
         num_segments: None,
         num_signals: 12,
-        sampling_frequency: 250.0, // default sampling frequency
+        sampling_frequency: None,
         counter_frequency: None,
         base_counter: None,
         num_samples: None,
@@ -29,7 +29,7 @@ fn test_full_record_line() {
         name: "db_100".to_string(),
         num_segments: Some(2),
         num_signals: 2,
-        sampling_frequency: 360.0,
+        sampling_frequency: Some(360.0),
         counter_frequency: Some(72.0),
         base_counter: Some(0.0),
         num_samples: Some(650_000),
@@ -49,7 +49,7 @@ fn test_with_sampling_frequency_only() {
         name: "rec".to_string(),
         num_segments: None,
         num_signals: 4,
-        sampling_frequency: 500.0,
+        sampling_frequency: Some(500.0),
         counter_frequency: None,
         base_counter: None,
         num_samples: None,
@@ -67,7 +67,43 @@ fn test_with_floating_point_frequency() {
         name: "rec".to_string(),
         num_segments: None,
         num_signals: 2,
-        sampling_frequency: 360.5,
+        sampling_frequency: Some(360.5),
+        counter_frequency: None,
+        base_counter: None,
+        num_samples: None,
+        base_time: None,
+        base_date: None,
+    };
+    assert_eq!(metadata, expected);
+}
+
+#[test]
+fn test_with_decimal_point_frequency() {
+    let line = "rec 2 360.";
+    let metadata = Metadata::from_record_line(line).unwrap();
+    let expected = Metadata {
+        name: "rec".to_string(),
+        num_segments: None,
+        num_signals: 2,
+        sampling_frequency: Some(360.0),
+        counter_frequency: None,
+        base_counter: None,
+        num_samples: None,
+        base_time: None,
+        base_date: None,
+    };
+    assert_eq!(metadata, expected);
+}
+
+#[test]
+fn test_with_exponential_notation_frequency() {
+    let line = "rec 2 3.6e2";
+    let metadata = Metadata::from_record_line(line).unwrap();
+    let expected = Metadata {
+        name: "rec".to_string(),
+        num_segments: None,
+        num_signals: 2,
+        sampling_frequency: Some(360.0),
         counter_frequency: None,
         base_counter: None,
         num_samples: None,
@@ -85,7 +121,43 @@ fn test_with_counter_frequency_no_base() {
         name: "rec".to_string(),
         num_segments: None,
         num_signals: 4,
-        sampling_frequency: 500.0,
+        sampling_frequency: Some(500.0),
+        counter_frequency: Some(100.0),
+        base_counter: None,
+        num_samples: None,
+        base_time: None,
+        base_date: None,
+    };
+    assert_eq!(metadata, expected);
+}
+
+#[test]
+fn test_with_decimal_point_counter_frequency() {
+    let line = "rec 2 500/100.";
+    let metadata = Metadata::from_record_line(line).unwrap();
+    let expected = Metadata {
+        name: "rec".to_string(),
+        num_segments: None,
+        num_signals: 2,
+        sampling_frequency: Some(500.0),
+        counter_frequency: Some(100.0),
+        base_counter: None,
+        num_samples: None,
+        base_time: None,
+        base_date: None,
+    };
+    assert_eq!(metadata, expected);
+}
+
+#[test]
+fn test_with_exponential_notation_counter_frequency() {
+    let line = "rec 2 500/1.0e2";
+    let metadata = Metadata::from_record_line(line).unwrap();
+    let expected = Metadata {
+        name: "rec".to_string(),
+        num_segments: None,
+        num_signals: 2,
+        sampling_frequency: Some(500.0),
         counter_frequency: Some(100.0),
         base_counter: None,
         num_samples: None,
@@ -103,7 +175,7 @@ fn test_with_counter_frequency_and_base() {
         name: "rec".to_string(),
         num_segments: None,
         num_signals: 2,
-        sampling_frequency: 500.0,
+        sampling_frequency: Some(500.0),
         counter_frequency: Some(100.0),
         base_counter: Some(50.0),
         num_samples: None,
@@ -123,7 +195,7 @@ fn test_time_only() {
         name: "rec".to_string(),
         num_segments: None,
         num_signals: 2,
-        sampling_frequency: 250.0,
+        sampling_frequency: None,
         counter_frequency: None,
         base_counter: None,
         num_samples: None,
@@ -141,7 +213,7 @@ fn test_date_only() {
         name: "rec".to_string(),
         num_segments: None,
         num_signals: 2,
-        sampling_frequency: 250.0,
+        sampling_frequency: None,
         counter_frequency: None,
         base_counter: None,
         num_samples: None,
@@ -159,7 +231,7 @@ fn test_time_and_date_only() {
         name: "rec".to_string(),
         num_segments: None,
         num_signals: 2,
-        sampling_frequency: 250.0,
+        sampling_frequency: None,
         counter_frequency: None,
         base_counter: None,
         num_samples: None,
@@ -177,7 +249,7 @@ fn test_frequency_and_time_no_samples() {
         name: "rec".to_string(),
         num_segments: None,
         num_signals: 2,
-        sampling_frequency: 500.0,
+        sampling_frequency: Some(500.0),
         counter_frequency: None,
         base_counter: None,
         num_samples: None,
@@ -195,7 +267,7 @@ fn test_frequency_and_date_no_samples_no_time() {
         name: "rec".to_string(),
         num_segments: None,
         num_signals: 2,
-        sampling_frequency: 500.0,
+        sampling_frequency: Some(500.0),
         counter_frequency: None,
         base_counter: None,
         num_samples: None,
@@ -213,7 +285,7 @@ fn test_samples_and_time_no_frequency() {
         name: "rec".to_string(),
         num_segments: None,
         num_signals: 2,
-        sampling_frequency: 650_000.0, // first numeric is always frequency
+        sampling_frequency: Some(650_000.0), // first numeric is always frequency
         counter_frequency: None,
         base_counter: None,
         num_samples: None,
@@ -231,7 +303,7 @@ fn test_frequency_samples_and_date_no_time() {
         name: "rec".to_string(),
         num_segments: None,
         num_signals: 2,
-        sampling_frequency: 500.0,
+        sampling_frequency: Some(500.0),
         counter_frequency: None,
         base_counter: None,
         num_samples: Some(650_000),
@@ -324,6 +396,26 @@ fn test_whitespace_only_line() {
 }
 
 #[test]
+fn test_zero_num_segments() {
+    let line = "rec/0 2";
+    let result = Metadata::from_record_line(line);
+    assert!(
+        matches!(result, Err(Error::InvalidHeader(_))),
+        "Expected InvalidHeader error, got {result:?}"
+    );
+}
+
+#[test]
+fn test_zero_num_signals() {
+    let line = "rec 0";
+    let result = Metadata::from_record_line(line);
+    assert!(
+        matches!(result, Err(Error::InvalidHeader(_))),
+        "Expected InvalidHeader error, got {result:?}"
+    );
+}
+
+#[test]
 fn test_missing_num_signals() {
     let result = Metadata::from_record_line("record");
     assert!(
@@ -381,6 +473,16 @@ fn test_negative_sampling_frequency() {
 }
 
 #[test]
+fn test_zero_sampling_frequency() {
+    let line = "rec 2 0";
+    let result = Metadata::from_record_line(line);
+    assert!(
+        matches!(result, Err(Error::InvalidHeader(_))),
+        "Expected InvalidHeader error, got {result:?}"
+    );
+}
+
+#[test]
 fn test_invalid_counter_frequency() {
     let line = "rec 2 500/abc";
     let result = Metadata::from_record_line(line);
@@ -411,8 +513,38 @@ fn test_negative_counter_frequency() {
 }
 
 #[test]
+fn test_zero_counter_frequency() {
+    let line = "rec 2 500/0";
+    let result = Metadata::from_record_line(line);
+    assert!(
+        matches!(result, Err(Error::InvalidHeader(_))),
+        "Expected InvalidHeader error, got {result:?}"
+    );
+}
+
+#[test]
+fn test_counter_frequency_without_sampling_frequency() {
+    let line = "rec 2 /100(100)";
+    let result = Metadata::from_record_line(line);
+    assert!(
+        matches!(result, Err(Error::InvalidHeader(_))),
+        "Expected InvalidHeader error, got {result:?}"
+    );
+}
+
+#[test]
 fn test_invalid_base_counter() {
     let line = "rec 2 500/100(abc)";
+    let result = Metadata::from_record_line(line);
+    assert!(
+        matches!(result, Err(Error::InvalidHeader(_))),
+        "Expected InvalidHeader error, got {result:?}"
+    );
+}
+
+#[test]
+fn test_base_counter_only() {
+    let line = "rec 2 (100)";
     let result = Metadata::from_record_line(line);
     assert!(
         matches!(result, Err(Error::InvalidHeader(_))),
