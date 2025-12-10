@@ -11,6 +11,9 @@ The basic decoding of Waveform Database (WFDB) format files is implemented.
 > - v0.1.x: breaking changes may occur in patch releases.
 > - v0.x.x (except v0.1.x): breaking changes may occur in minor releases.
 
+> [!WARNING]
+> Support to format 212 records with odd signal numbers in the same file still has problems!
+
 > [!CAUTION]
 > This library is not stable; it may not handle all kinds of waveform database files. I'm working on testing the library on more datasets in WFDB format, but it still takes some time to finish. If you find some problem processing your datasets, feel free to open an issue or PR.
 
