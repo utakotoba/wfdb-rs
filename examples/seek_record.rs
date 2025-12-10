@@ -45,7 +45,7 @@ fn demonstrate_single_segment_seeking(record: &Record) -> wfdb::Result<()> {
     }
 
     let signal_idx = 0;
-    let signal_info = &record.signals().unwrap()[signal_idx];
+    let signal_info = &record.signal_info().unwrap()[signal_idx];
     println!(
         "\nDemonstrating with Signal {}: {}",
         signal_idx,
@@ -158,7 +158,7 @@ fn demonstrate_multi_segment_seeking(record: &Record) -> wfdb::Result<()> {
     println!("\n=== Multi-Segment Record ===");
     println!("Segments: {}", record.segment_count());
 
-    if let Some(segments) = record.segments() {
+    if let Some(segments) = record.segment_info() {
         println!("\nSegment details:");
         for (i, seg) in segments.iter().enumerate() {
             println!(

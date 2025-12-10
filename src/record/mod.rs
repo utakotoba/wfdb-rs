@@ -164,7 +164,7 @@ impl Record {
     ///
     /// Returns `None` for multi-segment records.
     #[must_use]
-    pub fn signals(&self) -> Option<&[SignalInfo]> {
+    pub fn signal_info(&self) -> Option<&[SignalInfo]> {
         self.header.specifications.signals()
     }
 
@@ -172,7 +172,7 @@ impl Record {
     ///
     /// Returns `None` for single-segment records.
     #[must_use]
-    pub fn segments(&self) -> Option<&[SegmentInfo]> {
+    pub fn segment_info(&self) -> Option<&[SegmentInfo]> {
         self.header.specifications.segments()
     }
 
@@ -193,7 +193,7 @@ impl Record {
     /// Returns 0 for multi-segment records (use `segment_count()` instead).
     #[must_use]
     pub fn signal_count(&self) -> usize {
-        self.signals().map_or(0, <[SignalInfo]>::len)
+        self.signal_info().map_or(0, <[SignalInfo]>::len)
     }
 
     /// Get the number of segments (for multi-segment records).
@@ -201,7 +201,7 @@ impl Record {
     /// Returns 0 for single-segment records (use `signal_count()` instead).
     #[must_use]
     pub fn segment_count(&self) -> usize {
-        self.segments().map_or(0, <[SegmentInfo]>::len)
+        self.segment_info().map_or(0, <[SegmentInfo]>::len)
     }
 
     /// Get the base directory path for this record.
@@ -248,7 +248,7 @@ impl Record {
             ));
         }
 
-        let signals = self.signals().ok_or_else(|| {
+        let signals = self.signal_info().ok_or_else(|| {
             Error::InvalidHeader("No signal specifications in header".to_string())
         })?;
 
@@ -304,7 +304,7 @@ impl Record {
             ));
         }
 
-        let signals = self.signals().ok_or_else(|| {
+        let signals = self.signal_info().ok_or_else(|| {
             Error::InvalidHeader("No signal specifications in header".to_string())
         })?;
 
@@ -345,7 +345,7 @@ impl Record {
             ));
         }
 
-        let segments = self.segments().ok_or_else(|| {
+        let segments = self.segment_info().ok_or_else(|| {
             Error::InvalidHeader("No segment specifications in header".to_string())
         })?;
 

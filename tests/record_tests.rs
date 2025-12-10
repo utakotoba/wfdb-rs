@@ -17,7 +17,7 @@ fn test_record_open_from_memory() {
     assert_eq!(record.signal_count(), 2);
     assert_eq!(record.segment_count(), 0);
 
-    let signals = record.signals().unwrap();
+    let signals = record.signal_info().unwrap();
     assert_eq!(signals[0].file_name, "100.dat");
     assert_eq!(signals[0].description, Some("MLII".to_string()));
     assert_eq!(signals[1].description, Some("V5".to_string()));
@@ -39,7 +39,7 @@ fn test_record_multi_segment() {
     assert_eq!(record.segment_count(), 3);
     assert_eq!(record.signal_count(), 0);
 
-    let segments = record.segments().unwrap();
+    let segments = record.segment_info().unwrap();
     assert_eq!(segments[0].record_name, "100s");
     assert_eq!(segments[0].num_samples, 21600);
     assert_eq!(segments[1].record_name, "~");
@@ -60,7 +60,7 @@ fn test_record_accessors() {
     assert!((record.metadata().sampling_frequency() - 250.0).abs() < f64::EPSILON);
     assert_eq!(record.metadata().num_samples, Some(1000));
 
-    let signals = record.signals().unwrap();
+    let signals = record.signal_info().unwrap();
     assert_eq!(signals.len(), 1);
     assert_eq!(signals[0].file_name, "test.dat");
 }

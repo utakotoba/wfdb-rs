@@ -32,7 +32,7 @@ fn main() -> wfdb::Result<()> {
             "Multi-segment record with {} segments",
             record.segment_count()
         );
-        if let Some(segments) = record.segments() {
+        if let Some(segments) = record.segment_info() {
             for (i, seg) in segments.iter().enumerate() {
                 println!(
                     "  Segment {}: {} ({} samples)",
@@ -46,7 +46,7 @@ fn main() -> wfdb::Result<()> {
             record.signal_count()
         );
 
-        if let Some(signals) = record.signals() {
+        if let Some(signals) = record.signal_info() {
             for (i, sig) in signals.iter().enumerate() {
                 println!(
                     "\nSignal {}: {}",
