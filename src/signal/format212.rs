@@ -116,7 +116,7 @@ impl FormatDecoder for Format212Decoder {
 
     fn bytes_per_frame(&self, num_signals: usize) -> Option<usize> {
         // Format212: 3 bytes per 2 samples
-        // For N signals: ceil(N/2) * 3 bytes per frame
-        Some(num_signals.div_ceil(2) * 3)
+        // For N signals in a frame: ceil(N * 3 / 2) bytes
+        Some((num_signals * 3).div_ceil(2))
     }
 }
